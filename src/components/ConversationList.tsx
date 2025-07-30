@@ -1,0 +1,143 @@
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Trash2, MessageSquare, Plus } from 'lucide-react';
+import { useChat } from '@/hooks/useChat';
+import { useToast } from '@/hooks/use-toast';
+
+interface ConversationListProps {
+  onClose?: () => void;
+}
+
+const ConversationList = ({ onClose }: ConversationListProps) => {
+  const [showNewConversation, setShowNewConversation] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const { conversations, currentConversation, createConversation, deleteConversation, switchConversation } = useChat();
+  const { toast } = useToast();
+
+  const handleCreateConversation = async () => {
+    if (!newTitle.trim()) return;
+
+    const conversation = await createConversation(newTitle.trim());
+    if (conversation) {
+      switchConversation(conversation.id);
+      setNewTitle('');
+      setShowNewConversation(false);
+      onClose?.();
+      toast({
+        title: "Conversation created",
+        description: "New conversation started successfully",
+      });
+    }
+  };
+
+  const handleDeleteConversation = async (id: string) => {
+    await deleteConversation(id);
+    toast({
+      title: "Conversation deleted",
+      description: "Conversation has been removed",
+    });
+  };
+
+  const handleSwitchConversation = (id: string) => {
+    switchConversation(id);
+    onClose?.();
+  };
+
+  return (
+    <Card className="h-full flex flex-col">
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Conversations</h2>
+          <Button
+            size="sm"
+            onClick={() => setShowNewConversation(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            New
+          </Button>
+        </div>
+
+        {showNewConversation && (
+          <div className="space-y-2">
+            <Input
+              placeholder="Conversation title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateConversation()}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleCreateConversation}>
+                Create
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setShowNewConversation(false);
+                  setNewTitle('');
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="p-2">
+          {conversations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No conversations yet</p>
+              <p className="text-xs">Create a new conversation to get started</p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {conversations.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  className={`group flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-colors ${
+                    currentConversation === conversation.id
+                      ? 'bg-primary/10 border border-primary/20'
+                      : 'hover:bg-muted/50'
+                  }`}
+                >
+                  <div
+                    className="flex-1 min-w-0"
+                    onClick={() => handleSwitchConversation(conversation.id)}
+                  >
+                    <p className="font-medium truncate text-sm">
+                      {conversation.title || 'Untitled Conversation'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(conversation.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteConversation(conversation.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </Card>
+  );
+};
+
+export default ConversationList;
