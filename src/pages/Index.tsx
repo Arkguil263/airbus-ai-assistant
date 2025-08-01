@@ -141,31 +141,37 @@ const Index = () => {
               <TabsTrigger value="A350">A350</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="A320" className="flex-1 flex flex-col mt-2">
-              <MessageList messages={messages} isLoading={isLoading} />
-              <MessageInput 
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A320 AI assistant"}
-              />
+            <TabsContent value="A320" className="mx-4 mb-4">
+              <div className="border rounded-lg flex flex-col h-full bg-card">
+                <MessageList messages={messages} isLoading={isLoading} />
+                <MessageInput 
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A320 AI assistant"}
+                />
+              </div>
             </TabsContent>
             
-            <TabsContent value="A330" className="flex-1 flex flex-col mt-2">
-              <MessageList messages={messages} isLoading={isLoading} />
-              <MessageInput 
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A330 AI assistant"}
-              />
+            <TabsContent value="A330" className="mx-4 mb-4">
+              <div className="border rounded-lg flex flex-col h-full bg-card">
+                <MessageList messages={messages} isLoading={isLoading} />
+                <MessageInput 
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A330 AI assistant"}
+                />
+              </div>
             </TabsContent>
             
-            <TabsContent value="A350" className="flex-1 flex flex-col mt-2">
-              <MessageList messages={messages} isLoading={isLoading} />
-              <MessageInput 
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A350 AI assistant"}
-              />
+            <TabsContent value="A350" className="mx-4 mb-4">
+              <div className="border rounded-lg flex flex-col h-full bg-card">
+                <MessageList messages={messages} isLoading={isLoading} />
+                <MessageInput 
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A350 AI assistant"}
+                />
+              </div>
             </TabsContent>
           </Tabs>
         </div>

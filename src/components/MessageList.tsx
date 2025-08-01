@@ -19,7 +19,7 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
   }, [messages]);
 
   return (
-    <Card className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col">
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         {messages.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
@@ -80,7 +80,7 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
           </div>
         )}
       </ScrollArea>
-    </Card>
+    </div>
   );
 };
 
