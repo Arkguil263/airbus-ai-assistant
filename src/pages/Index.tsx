@@ -114,13 +114,15 @@ const Index = () => {
             </Sheet>
             
             <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/c/cf/Logo_Airbus_2014.svg" 
+              src="/airbus-logo.svg" 
               alt="Airbus AI"
               className="h-12 w-auto object-contain"
               onError={(e) => {
+                console.log('Image failed to load:', e);
                 e.currentTarget.style.display = 'none';
                 e.currentTarget.nextElementSibling?.classList.remove('hidden');
               }}
+              onLoad={() => console.log('Image loaded successfully')}
             />
             <h1 className="text-xl font-bold hidden">Airbus AI</h1>
           </div>
