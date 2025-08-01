@@ -134,48 +134,46 @@ const Index = () => {
         </div>
 
         {/* Main content area with tabs */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col" style={{ height: 'calc(100vh - 80px)' }}>
           <Tabs value={currentAircraftModel} onValueChange={switchAircraftModel} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 mx-4 mt-4 mb-4 shrink-0">
+            <TabsList className="grid w-full grid-cols-3 mx-4 mt-4 mb-4">
               <TabsTrigger value="A320">A320</TabsTrigger>
               <TabsTrigger value="A330">A330</TabsTrigger>
               <TabsTrigger value="A350">A350</TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 mx-4 mb-4">
-              <TabsContent value="A320" className="h-full m-0">
-                <div className="border rounded-lg flex flex-col bg-card h-full">
-                  <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} />
-                  <MessageInput 
-                    onSendMessage={handleSendMessage}
-                    isLoading={aircraftStates.A320.isLoading}
-                    placeholder={aircraftStates.A320.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A320 AI assistant"}
-                  />
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="A330" className="h-full m-0">
-                <div className="border rounded-lg flex flex-col bg-card h-full">
-                  <MessageList messages={aircraftStates.A330.messages} isLoading={aircraftStates.A330.isLoading} />
-                  <MessageInput 
-                    onSendMessage={handleSendMessage}
-                    isLoading={aircraftStates.A330.isLoading}
-                    placeholder={aircraftStates.A330.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A330 AI assistant"}
-                  />
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="A350" className="h-full m-0">
-                <div className="border rounded-lg flex flex-col bg-card h-full">
-                  <MessageList messages={aircraftStates.A350.messages} isLoading={aircraftStates.A350.isLoading} />
-                  <MessageInput 
-                    onSendMessage={handleSendMessage}
-                    isLoading={aircraftStates.A350.isLoading}
-                    placeholder={aircraftStates.A350.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A350 AI assistant"}
-                  />
-                </div>
-              </TabsContent>
-            </div>
+            <TabsContent value="A320" className="mx-4 mb-4 flex-1">
+              <div className="border rounded-lg flex flex-col bg-card h-full">
+                <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} />
+                <MessageInput 
+                  onSendMessage={handleSendMessage}
+                  isLoading={aircraftStates.A320.isLoading}
+                  placeholder={aircraftStates.A320.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A320 AI assistant"}
+                />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="A330" className="mx-4 mb-4 flex-1">
+              <div className="border rounded-lg flex flex-col bg-card h-full">
+                <MessageList messages={aircraftStates.A330.messages} isLoading={aircraftStates.A330.isLoading} />
+                <MessageInput 
+                  onSendMessage={handleSendMessage}
+                  isLoading={aircraftStates.A330.isLoading}
+                  placeholder={aircraftStates.A330.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A330 AI assistant"}
+                />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="A350" className="mx-4 mb-4 flex-1">
+              <div className="border rounded-lg flex flex-col bg-card h-full">
+                <MessageList messages={aircraftStates.A350.messages} isLoading={aircraftStates.A350.isLoading} />
+                <MessageInput 
+                  onSendMessage={handleSendMessage}
+                  isLoading={aircraftStates.A350.isLoading}
+                  placeholder={aircraftStates.A350.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A350 AI assistant"}
+                />
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
