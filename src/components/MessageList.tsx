@@ -22,10 +22,12 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
     <div className="flex-1 flex flex-col">
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         {messages.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">Start a conversation</p>
-            <p className="text-sm">Send a message to begin chatting with your AI assistant</p>
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-muted-foreground">
+              <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium mb-2">Start a conversation</p>
+              <p className="text-sm">Send a message to begin chatting with your AI assistant</p>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

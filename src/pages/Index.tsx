@@ -142,7 +142,7 @@ const Index = () => {
             </TabsList>
             
             <TabsContent value="A320" className="mx-4 mb-4">
-              <div className="border rounded-lg flex flex-col h-full bg-card">
+              <div className="border rounded-lg flex flex-col bg-card" style={{ height: 'calc(100vh - 200px)' }}>
                 <MessageList messages={messages} isLoading={isLoading} />
                 <MessageInput 
                   onSendMessage={handleSendMessage}
@@ -153,7 +153,7 @@ const Index = () => {
             </TabsContent>
             
             <TabsContent value="A330" className="mx-4 mb-4">
-              <div className="border rounded-lg flex flex-col h-full bg-card">
+              <div className="border rounded-lg flex flex-col bg-card" style={{ height: 'calc(100vh - 200px)' }}>
                 <MessageList messages={messages} isLoading={isLoading} />
                 <MessageInput 
                   onSendMessage={handleSendMessage}
@@ -164,7 +164,7 @@ const Index = () => {
             </TabsContent>
             
             <TabsContent value="A350" className="mx-4 mb-4">
-              <div className="border rounded-lg flex flex-col h-full bg-card">
+              <div className="border rounded-lg flex flex-col bg-card" style={{ height: 'calc(100vh - 200px)' }}>
                 <MessageList messages={messages} isLoading={isLoading} />
                 <MessageInput 
                   onSendMessage={handleSendMessage}
