@@ -85,7 +85,7 @@ const Index = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold mb-4">Welcome to Your Chat Agent</h1>
+          <h1 className="text-4xl font-bold mb-4">Welcome to Airbus AI</h1>
           <p className="text-xl text-muted-foreground mb-6">Sign in to start chatting</p>
           <Button asChild>
             <Link to="/auth">Sign In</Link>
@@ -113,7 +113,11 @@ const Index = () => {
               </SheetContent>
             </Sheet>
             
-            <h1 className="text-xl font-bold">Chat Agent</h1>
+            <img 
+              src="/lovable-uploads/82dd354c-e106-4afb-a39a-0189a72a96fe.png" 
+              alt="Airbus AI" 
+              className="h-8 w-auto"
+            />
           </div>
           
           <div className="flex items-center gap-4">
