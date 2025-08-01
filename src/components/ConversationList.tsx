@@ -20,9 +20,9 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
   const handleCreateConversation = async () => {
     if (!newTitle.trim()) return;
 
-    const conversation = await createConversation(newTitle.trim());
-    if (conversation) {
-      switchConversation(conversation.id);
+    const conversationId = await createConversation(newTitle.trim());
+    if (conversationId) {
+      switchConversation(conversationId);
       setNewTitle('');
       setShowNewConversation(false);
       onClose?.();

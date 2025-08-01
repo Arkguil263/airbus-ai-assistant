@@ -7,9 +7,10 @@ interface MessageInputProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
   disabled?: boolean;
+  placeholder?: string;
 }
 
-const MessageInput = ({ onSendMessage, isLoading, disabled }: MessageInputProps) => {
+const MessageInput = ({ onSendMessage, isLoading, disabled, placeholder }: MessageInputProps) => {
   const [message, setMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -33,7 +34,7 @@ const MessageInput = ({ onSendMessage, isLoading, disabled }: MessageInputProps)
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={disabled ? "Select a conversation to start chatting" : "Type your message..."}
+        placeholder={placeholder || (disabled ? "Select a conversation to start chatting" : "Type your message...")}
         disabled={disabled || isLoading}
         className="flex-1"
       />

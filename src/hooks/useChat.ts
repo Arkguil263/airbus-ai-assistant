@@ -14,22 +14,28 @@ export interface Conversation {
   title: string;
   created_at: string;
   updated_at: string;
+  aircraft_model: string;
 }
 
 export const useChat = () => {
+  const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const [currentAircraftModel, setCurrentAircraftModel] = useState<string>('A320');
 
-  // Load conversations
-  const loadConversations = async () => {
+  // Load conversations for current aircraft model
+  const loadConversations = async (aircraftModel?: string) => {
     if (!user) return;
-
+    
+    const modelToFilter = aircraftModel || currentAircraftModel;
+    
     const { data, error } = await supabase
       .from('conversations')
       .select('*')
+      .eq('user_id', user.id)
+      .eq('aircraft_model', modelToFilter)
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -56,16 +62,19 @@ export const useChat = () => {
     setMessages((data || []) as Message[]);
   };
 
-  // Create new conversation
-  const createConversation = async (title: string) => {
+  // Create conversation
+  const createConversation = async (title: string): Promise<string | null> => {
     if (!user) return null;
 
     const { data, error } = await supabase
       .from('conversations')
-      .insert({
-        user_id: user.id,
-        title: title
-      })
+      .insert([
+        {
+          title,
+          user_id: user.id,
+          aircraft_model: currentAircraftModel,
+        }
+      ])
       .select()
       .single();
 
@@ -75,7 +84,7 @@ export const useChat = () => {
     }
 
     await loadConversations();
-    return data;
+    return data.id;
   };
 
   // Send message
@@ -89,7 +98,8 @@ export const useChat = () => {
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: {
           message: content,
-          conversationId: currentConversation
+          conversationId: currentConversation,
+          aircraftModel: currentAircraftModel
         }
       });
 
@@ -135,21 +145,37 @@ export const useChat = () => {
     await loadMessages(conversationId);
   };
 
+  // Switch aircraft model
+  const switchAircraftModel = async (aircraftModel: string) => {
+    setCurrentAircraftModel(aircraftModel);
+    setCurrentConversation(null);
+    setMessages([]);
+    await loadConversations(aircraftModel);
+  };
+
+  // Load conversations when user or aircraft model changes
   useEffect(() => {
     if (user) {
       loadConversations();
+    } else {
+      setConversations([]);
+      setCurrentConversation(null);
+      setMessages([]);
     }
-  }, [user]);
+  }, [user, currentAircraftModel]);
 
   return {
     conversations,
     currentConversation,
     messages,
     isLoading,
+    currentAircraftModel,
+    loadConversations,
+    loadMessages,
     createConversation,
     sendMessage,
     deleteConversation,
     switchConversation,
-    loadConversations
+    switchAircraftModel,
   };
 };

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Menu } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat';
@@ -22,9 +23,12 @@ const Index = () => {
     currentConversation,
     messages,
     isLoading,
+    currentAircraftModel,
     createConversation,
     sendMessage,
-    switchConversation
+    switchConversation,
+    deleteConversation,
+    switchAircraftModel,
   } = useChat();
 
   // Redirect to auth if not logged in
@@ -39,7 +43,7 @@ const Index = () => {
       // Create a new conversation
       const conversation = await createConversation("New Chat");
       if (conversation) {
-        await switchConversation(conversation.id);
+        await switchConversation(conversation);
         // Send message after switching
         setTimeout(async () => {
           try {
@@ -128,13 +132,42 @@ const Index = () => {
           <ConversationList />
         </div>
 
-        {/* Main Chat Area */}
+        {/* Main content area with tabs */}
         <div className="flex-1 flex flex-col">
-          <MessageList messages={messages} isLoading={isLoading} />
-          <MessageInput 
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-          />
+          <Tabs value={currentAircraftModel} onValueChange={switchAircraftModel} className="flex-1 flex flex-col">
+            <TabsList className="grid w-full grid-cols-3 mx-4 mt-4">
+              <TabsTrigger value="A320">A320</TabsTrigger>
+              <TabsTrigger value="A330">A330</TabsTrigger>
+              <TabsTrigger value="A350">A350</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="A320" className="flex-1 flex flex-col mt-2">
+              <MessageList messages={messages} isLoading={isLoading} />
+              <MessageInput 
+                onSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A320 AI assistant"}
+              />
+            </TabsContent>
+            
+            <TabsContent value="A330" className="flex-1 flex flex-col mt-2">
+              <MessageList messages={messages} isLoading={isLoading} />
+              <MessageInput 
+                onSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A330 AI assistant"}
+              />
+            </TabsContent>
+            
+            <TabsContent value="A350" className="flex-1 flex flex-col mt-2">
+              <MessageList messages={messages} isLoading={isLoading} />
+              <MessageInput 
+                onSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A350 AI assistant"}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

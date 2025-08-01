@@ -14,8 +14,13 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationId, assistantId } = await req.json();
-    console.log('Chat request:', { message, conversationId, assistantId });
+    const { message, conversationId, aircraftModel = 'A320' } = await req.json();
+    console.log('Chat request:', { message, conversationId, aircraftModel });
+
+    // Validate input
+    if (!message || !conversationId) {
+      throw new Error('Missing required parameters: message and conversationId');
+    }
 
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) {
@@ -38,6 +43,19 @@ serve(async (req) => {
     if (authError || !user) {
       throw new Error('Unauthorized');
     }
+
+    // Get assistant ID for the aircraft model
+    const { data: assistantData, error: assistantError } = await supabase
+      .from('aircraft_assistants')
+      .select('assistant_id')
+      .eq('aircraft_model', aircraftModel)
+      .single();
+
+    if (assistantError || !assistantData) {
+      throw new Error(`No assistant found for aircraft model: ${aircraftModel}`);
+    }
+
+    const assistantId = assistantData.assistant_id;
 
     // Create a thread with OpenAI
     console.log('Creating OpenAI thread...');

@@ -14,8 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      aircraft_assistants: {
+        Row: {
+          aircraft_model: string
+          assistant_id: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          aircraft_model: string
+          assistant_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          aircraft_model?: string
+          assistant_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
+          aircraft_model: string
           created_at: string
           id: string
           title: string | null
@@ -23,6 +48,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          aircraft_model?: string
           created_at?: string
           id?: string
           title?: string | null
@@ -30,6 +56,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          aircraft_model?: string
           created_at?: string
           id?: string
           title?: string | null
