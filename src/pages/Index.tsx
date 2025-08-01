@@ -114,7 +114,7 @@ const Index = () => {
             </Sheet>
             
             <img 
-              src="/airbus-logo.png" 
+              src="https://upload.wikimedia.org/wikipedia/commons/8/85/Logo_Airbus_2014.svg" 
               alt="Airbus AI"
               className="h-12 w-auto object-contain"
               onError={(e) => {
