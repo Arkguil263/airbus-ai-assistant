@@ -115,7 +115,7 @@ const Index = () => {
             
             <img 
               src="https://upload.wikimedia.org/wikipedia/commons/c/cf/Logo_Airbus_2014.svg" 
-              alt="Airbus AI"
+              //alt="Airbus AI"
               className="h-12 w-auto object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
