@@ -114,8 +114,8 @@ const Index = () => {
             </Sheet>
             
             <img 
-              src="/lovable-uploads/82dd354c-e106-4afb-a39a-0189a72a96fe.png" 
-              alt="Airbus AI" 
+              src="/airbus-logo.png" 
+              alt="Airbus AI"
               className="h-12 w-auto object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
