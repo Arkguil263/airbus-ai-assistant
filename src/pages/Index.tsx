@@ -145,7 +145,7 @@ const Index = () => {
             <div className="flex-1 mx-4 mb-4">
               <TabsContent value="A320" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
-                  <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} />
+                  <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} aircraftModel="A320" />
                   <MessageInput 
                     onSendMessage={handleSendMessage}
                     isLoading={aircraftStates.A320.isLoading}
@@ -156,7 +156,7 @@ const Index = () => {
               
               <TabsContent value="A330" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
-                  <MessageList messages={aircraftStates.A330.messages} isLoading={aircraftStates.A330.isLoading} />
+                  <MessageList messages={aircraftStates.A330.messages} isLoading={aircraftStates.A330.isLoading} aircraftModel="A330" />
                   <MessageInput 
                     onSendMessage={handleSendMessage}
                     isLoading={aircraftStates.A330.isLoading}
@@ -167,7 +167,7 @@ const Index = () => {
               
               <TabsContent value="A350" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
-                  <MessageList messages={aircraftStates.A350.messages} isLoading={aircraftStates.A350.isLoading} />
+                  <MessageList messages={aircraftStates.A350.messages} isLoading={aircraftStates.A350.isLoading} aircraftModel="A350" />
                   <MessageInput 
                     onSendMessage={handleSendMessage}
                     isLoading={aircraftStates.A350.isLoading}

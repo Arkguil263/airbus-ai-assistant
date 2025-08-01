@@ -3,13 +3,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { Bot, User } from 'lucide-react';
 import { Message } from '@/hooks/useChat';
+import TypingIndicator from './TypingIndicator';
 
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
+  aircraftModel?: string;
 }
 
-const MessageList = ({ messages, isLoading }: MessageListProps) => {
+const MessageList = ({ messages, isLoading, aircraftModel }: MessageListProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,20 +67,7 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
               </div>
             ))}
             
-            {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-primary" />
-                </div>
-                <div className="bg-muted rounded-lg px-4 py-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {isLoading && <TypingIndicator aircraftModel={aircraftModel} />}
           </div>
         )}
       </ScrollArea>
