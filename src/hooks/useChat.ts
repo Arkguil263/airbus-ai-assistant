@@ -79,7 +79,7 @@ export const useChat = () => {
   };
 
   // Send message
-  const sendMessage = async (content: string, assistantId: string) => {
+  const sendMessage = async (content: string) => {
     if (!user || !currentConversation) return;
 
     setIsLoading(true);
@@ -89,8 +89,7 @@ export const useChat = () => {
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: {
           message: content,
-          conversationId: currentConversation,
-          assistantId: assistantId
+          conversationId: currentConversation
         }
       });
 

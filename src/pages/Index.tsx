@@ -9,13 +9,12 @@ import { useToast } from '@/hooks/use-toast';
 import ConversationList from '@/components/ConversationList';
 import MessageList from '@/components/MessageList';
 import MessageInput from '@/components/MessageInput';
-import SettingsDialog from '@/components/SettingsDialog';
+
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [assistantId, setAssistantId] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const {
@@ -36,15 +35,6 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   const handleSendMessage = async (message: string) => {
-    if (!assistantId.trim()) {
-      toast({
-        title: "Assistant ID required",
-        description: "Please set your OpenAI Assistant ID in settings",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!currentConversation) {
       // Create a new conversation
       const conversation = await createConversation("New Chat");
@@ -53,7 +43,7 @@ const Index = () => {
         // Send message after switching
         setTimeout(async () => {
           try {
-            await sendMessage(message, assistantId);
+            await sendMessage(message);
           } catch (error) {
             toast({
               title: "Error",
@@ -65,7 +55,7 @@ const Index = () => {
       }
     } else {
       try {
-        await sendMessage(message, assistantId);
+        await sendMessage(message);
       } catch (error) {
         toast({
           title: "Error",
@@ -122,10 +112,6 @@ const Index = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <SettingsDialog 
-              assistantId={assistantId} 
-              onAssistantIdChange={setAssistantId} 
-            />
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {user.email}
             </span>
@@ -148,7 +134,6 @@ const Index = () => {
           <MessageInput 
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
-            disabled={!assistantId.trim()}
           />
         </div>
       </div>
