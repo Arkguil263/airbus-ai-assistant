@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Menu } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useChat } from '@/hooks/useChat';
+import { useMultiChat } from '@/hooks/useMultiChat';
 import { useToast } from '@/hooks/use-toast';
 import ConversationList from '@/components/ConversationList';
 import MessageList from '@/components/MessageList';
@@ -19,17 +19,18 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const {
-    conversations,
-    currentConversation,
-    messages,
-    isLoading,
     currentAircraftModel,
+    aircraftStates,
+    getCurrentState,
     createConversation,
     sendMessage,
     switchConversation,
     deleteConversation,
     switchAircraftModel,
-  } = useChat();
+  } = useMultiChat();
+
+  // Get current aircraft state
+  const currentState = getCurrentState();
 
   // Redirect to auth if not logged in
   useEffect(() => {
@@ -39,15 +40,15 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   const handleSendMessage = async (message: string) => {
-    if (!currentConversation) {
+    if (!currentState.currentConversation) {
       // Create a new conversation
-      const conversation = await createConversation("New Chat");
+      const conversation = await createConversation("New Chat", currentAircraftModel);
       if (conversation) {
-        await switchConversation(conversation);
+        await switchConversation(conversation, currentAircraftModel);
         // Send message after switching
         setTimeout(async () => {
           try {
-            await sendMessage(message);
+            await sendMessage(message, currentAircraftModel);
           } catch (error) {
             toast({
               title: "Error",
@@ -59,7 +60,7 @@ const Index = () => {
       }
     } else {
       try {
-        await sendMessage(message);
+        await sendMessage(message, currentAircraftModel);
       } catch (error) {
         toast({
           title: "Error",
@@ -133,43 +134,43 @@ const Index = () => {
         </div>
 
         {/* Main content area with tabs */}
-        <div className="flex-1 flex flex-col">
-          <Tabs value={currentAircraftModel} onValueChange={switchAircraftModel} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 mx-4 mt-4">
+        <div className="flex-1 flex flex-col" style={{ height: 'calc(100vh - 80px)' }}>
+          <Tabs value={currentAircraftModel} onValueChange={switchAircraftModel} className="h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-3 mx-4 mt-4 mb-4">
               <TabsTrigger value="A320">A320</TabsTrigger>
               <TabsTrigger value="A330">A330</TabsTrigger>
               <TabsTrigger value="A350">A350</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="A320" className="mx-4 mb-4">
-              <div className="border rounded-lg flex flex-col bg-card" style={{ height: 'calc(100vh - 200px)' }}>
-                <MessageList messages={messages} isLoading={isLoading} />
+            <TabsContent value="A320" className="mx-4 mb-4 flex-1">
+              <div className="border rounded-lg flex flex-col bg-card h-full">
+                <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} />
                 <MessageInput 
                   onSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A320 AI assistant"}
+                  isLoading={aircraftStates.A320.isLoading}
+                  placeholder={aircraftStates.A320.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A320 AI assistant"}
                 />
               </div>
             </TabsContent>
             
-            <TabsContent value="A330" className="mx-4 mb-4">
-              <div className="border rounded-lg flex flex-col bg-card" style={{ height: 'calc(100vh - 200px)' }}>
-                <MessageList messages={messages} isLoading={isLoading} />
+            <TabsContent value="A330" className="mx-4 mb-4 flex-1">
+              <div className="border rounded-lg flex flex-col bg-card h-full">
+                <MessageList messages={aircraftStates.A330.messages} isLoading={aircraftStates.A330.isLoading} />
                 <MessageInput 
                   onSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A330 AI assistant"}
+                  isLoading={aircraftStates.A330.isLoading}
+                  placeholder={aircraftStates.A330.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A330 AI assistant"}
                 />
               </div>
             </TabsContent>
             
-            <TabsContent value="A350" className="mx-4 mb-4">
-              <div className="border rounded-lg flex flex-col bg-card" style={{ height: 'calc(100vh - 200px)' }}>
-                <MessageList messages={messages} isLoading={isLoading} />
+            <TabsContent value="A350" className="mx-4 mb-4 flex-1">
+              <div className="border rounded-lg flex flex-col bg-card h-full">
+                <MessageList messages={aircraftStates.A350.messages} isLoading={aircraftStates.A350.isLoading} />
                 <MessageInput 
                   onSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  placeholder={currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A350 AI assistant"}
+                  isLoading={aircraftStates.A350.isLoading}
+                  placeholder={aircraftStates.A350.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A350 AI assistant"}
                 />
               </div>
             </TabsContent>

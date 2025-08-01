@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Trash2, MessageSquare, Plus } from 'lucide-react';
-import { useChat } from '@/hooks/useChat';
+import { useMultiChat } from '@/hooks/useMultiChat';
 import { useToast } from '@/hooks/use-toast';
 
 interface ConversationListProps {
@@ -14,15 +14,25 @@ interface ConversationListProps {
 const ConversationList = ({ onClose }: ConversationListProps) => {
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const { conversations, currentConversation, createConversation, deleteConversation, switchConversation } = useChat();
+  const { 
+    currentAircraftModel, 
+    aircraftStates, 
+    getCurrentState, 
+    createConversation, 
+    deleteConversation, 
+    switchConversation 
+  } = useMultiChat();
+  
+  const currentState = getCurrentState();
+  const { conversations, currentConversation } = currentState;
   const { toast } = useToast();
 
   const handleCreateConversation = async () => {
     if (!newTitle.trim()) return;
 
-    const conversationId = await createConversation(newTitle.trim());
+    const conversationId = await createConversation(newTitle.trim(), currentAircraftModel);
     if (conversationId) {
-      switchConversation(conversationId);
+      switchConversation(conversationId, currentAircraftModel);
       setNewTitle('');
       setShowNewConversation(false);
       onClose?.();
@@ -34,7 +44,7 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
   };
 
   const handleDeleteConversation = async (id: string) => {
-    await deleteConversation(id);
+    await deleteConversation(id, currentAircraftModel);
     toast({
       title: "Conversation deleted",
       description: "Conversation has been removed",
@@ -42,7 +52,7 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
   };
 
   const handleSwitchConversation = (id: string) => {
-    switchConversation(id);
+    switchConversation(id, currentAircraftModel);
     onClose?.();
   };
 
