@@ -116,8 +116,13 @@ const Index = () => {
             <img 
               src="/lovable-uploads/82dd354c-e106-4afb-a39a-0189a72a96fe.png" 
               alt="Airbus AI" 
-              className="h-8 w-auto"
+              className="h-12 w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
             />
+            <h1 className="text-xl font-bold hidden">Airbus AI</h1>
           </div>
           
           <div className="flex items-center gap-4">
