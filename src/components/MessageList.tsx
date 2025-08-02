@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot } from 'lucide-react';
+import { Bot, Loader2 } from 'lucide-react';
 import { Message } from '@/hooks/useMultiChat';
 import ChatMessage from './ChatMessage';
 
@@ -12,6 +12,22 @@ interface MessageListProps {
 
 const MessageList = ({ messages, isLoading, aircraftModel }: MessageListProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Debug logging for message updates
+  useEffect(() => {
+    console.log('🎭 MessageList render update:', {
+      aircraftModel,
+      messageCount: messages.length,
+      isLoading,
+      messages: messages.map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content?.substring(0, 40) + '...',
+        isPending: m.isPending,
+        isTyping: m.isTyping
+      }))
+    });
+  }, [messages, isLoading, aircraftModel]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -32,7 +48,15 @@ const MessageList = ({ messages, isLoading, aircraftModel }: MessageListProps) =
   return (
     <div className="flex-1 flex flex-col">
       <ScrollArea className="flex-1 h-0 p-4" ref={scrollRef}>
-        {messages.length === 0 ? (
+        {isLoading && messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-muted-foreground">
+              <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin" />
+              <p className="text-lg font-medium mb-2">Loading messages...</p>
+              <p className="text-sm">Please wait while we load your conversation</p>
+            </div>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-muted-foreground">
               <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -49,6 +73,12 @@ const MessageList = ({ messages, isLoading, aircraftModel }: MessageListProps) =
                 aircraftModel={aircraftModel}
               />
             ))}
+            {isLoading && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                <span className="text-sm text-muted-foreground">Loading...</span>
+              </div>
+            )}
           </div>
         )}
       </ScrollArea>

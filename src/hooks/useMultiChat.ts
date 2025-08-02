@@ -90,24 +90,59 @@ export const useMultiChat = () => {
 
   // Load messages for a conversation
   const loadMessages = async (conversationId: string, aircraftModel: string) => {
-    console.log('📥 Loading messages for conversation:', conversationId);
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error loading messages:', error);
-      return;
-    }
-
-    const messages = (data || []) as Message[];
-    console.log('📥 Loaded messages:', messages.length, 'messages:', messages.map(m => `${m.role}: ${m.content?.substring(0, 30)}...`));
+    console.log('📥 loadMessages called:', { conversationId, aircraftModel });
     
-    updateAircraftState(aircraftModel, {
-      messages: messages,
-    });
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('❌ Error loading messages from database:', error);
+        throw error;
+      }
+
+      const messages = (data || []) as Message[];
+      console.log('📥 Database query result:', {
+        conversationId,
+        aircraftModel,
+        messageCount: messages.length,
+        messages: messages.map(m => ({
+          id: m.id,
+          role: m.role,
+          content: m.content?.substring(0, 50) + '...',
+          created_at: m.created_at
+        }))
+      });
+      
+      // Update aircraft state with loaded messages
+      updateAircraftState(aircraftModel, {
+        messages: messages,
+      });
+      
+      console.log('✅ Messages state updated for aircraft:', aircraftModel, 'with', messages.length, 'messages');
+      
+      // Verify state was updated
+      setTimeout(() => {
+        const currentState = aircraftStates[aircraftModel];
+        console.log('🔍 State verification after loadMessages:', {
+          aircraftModel,
+          currentConversation: currentState?.currentConversation,
+          messagesInState: currentState?.messages?.length || 0,
+          stateMessages: currentState?.messages?.map(m => ({ role: m.role, content: m.content?.substring(0, 30) })) || []
+        });
+      }, 100);
+      
+    } catch (error) {
+      console.error('❌ loadMessages failed:', error);
+      // Set empty messages array on error to prevent UI issues
+      updateAircraftState(aircraftModel, {
+        messages: [],
+      });
+      throw error;
+    }
   };
 
   // Create conversation for specific aircraft model
@@ -268,10 +303,37 @@ export const useMultiChat = () => {
 
   // Switch conversation for specific aircraft model
   const switchConversation = async (conversationId: string, aircraftModel: string) => {
-    updateAircraftState(aircraftModel, {
-      currentConversation: conversationId,
-    });
-    await loadMessages(conversationId, aircraftModel);
+    console.log('🔄 switchConversation called:', { conversationId, aircraftModel, currentAircraftModel });
+    
+    try {
+      // Step 1: Set loading state
+      updateAircraftState(aircraftModel, { isLoading: true });
+      
+      // Step 2: Update current conversation
+      updateAircraftState(aircraftModel, {
+        currentConversation: conversationId,
+      });
+      
+      console.log('📋 Updated currentConversation state to:', conversationId);
+      
+      // Step 3: Load messages for this conversation
+      console.log('📥 Loading messages for conversation:', conversationId);
+      await loadMessages(conversationId, aircraftModel);
+      
+      // Step 4: Verify state update
+      const updatedState = aircraftStates[aircraftModel];
+      console.log('✅ switchConversation completed:', {
+        conversationId,
+        aircraftModel,
+        messagesLoaded: updatedState?.messages?.length || 0,
+        currentConversation: updatedState?.currentConversation
+      });
+      
+    } catch (error) {
+      console.error('❌ Error in switchConversation:', error);
+    } finally {
+      updateAircraftState(aircraftModel, { isLoading: false });
+    }
   };
 
   // Switch aircraft model

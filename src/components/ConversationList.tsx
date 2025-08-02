@@ -52,9 +52,42 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
     });
   };
 
-  const handleSwitchConversation = (id: string) => {
-    switchConversation(id, currentAircraftModel);
-    onClose?.();
+  const handleSwitchConversation = async (id: string) => {
+    console.log('🎯 Conversation clicked:', { 
+      conversationId: id, 
+      currentAircraftModel,
+      conversationTitle: conversations.find(c => c.id === id)?.title
+    });
+    
+    try {
+      // Find the conversation to get its aircraft model
+      const conversation = conversations.find(c => c.id === id);
+      if (!conversation) {
+        console.error('❌ Conversation not found:', id);
+        return;
+      }
+      
+      console.log('📋 Conversation details:', {
+        id: conversation.id,
+        title: conversation.title,
+        aircraft_model: conversation.aircraft_model,
+        current_aircraft_model: currentAircraftModel
+      });
+      
+      // Switch to the conversation (this will load messages)
+      await switchConversation(id, currentAircraftModel);
+      
+      console.log('✅ Conversation switch completed, closing sidebar');
+      onClose?.();
+      
+    } catch (error) {
+      console.error('❌ Error switching conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load conversation messages",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
