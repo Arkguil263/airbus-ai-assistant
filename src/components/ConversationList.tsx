@@ -73,7 +73,10 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
       // If conversation is from a different aircraft model, switch to that model first
       if (conversationAircraftModel !== currentAircraftModel) {
         console.log('🔄 Switching aircraft model from', currentAircraftModel, 'to', conversationAircraftModel);
-        switchAircraftModel(conversationAircraftModel);
+        await switchAircraftModel(conversationAircraftModel);
+        
+        // Add a small delay to ensure the aircraft model switch completes
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       // Switch to the conversation using the correct aircraft model
