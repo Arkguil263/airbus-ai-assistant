@@ -19,7 +19,8 @@ const MessageList = ({ messages, isLoading, aircraftModel }: MessageListProps) =
       aircraftModel,
       messageCount: messages.length,
       isLoading,
-      messages: messages.map(m => ({
+      hasMessages: messages.length > 0,
+      messagesPreview: messages.map(m => ({
         id: m.id,
         role: m.role,
         content: m.content?.substring(0, 40) + '...',
@@ -27,6 +28,11 @@ const MessageList = ({ messages, isLoading, aircraftModel }: MessageListProps) =
         isTyping: m.isTyping
       }))
     });
+    
+    // Additional debugging: log when we have messages but they might not be showing
+    if (messages.length > 0 && !isLoading) {
+      console.log('✅ MessageList has', messages.length, 'messages and is not loading - should display messages');
+    }
   }, [messages, isLoading, aircraftModel]);
 
   useEffect(() => {

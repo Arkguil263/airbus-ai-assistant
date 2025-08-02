@@ -73,13 +73,14 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
       // If conversation is from a different aircraft model, switch to that model first
       if (conversationAircraftModel !== currentAircraftModel) {
         console.log('🔄 Switching aircraft model from', currentAircraftModel, 'to', conversationAircraftModel);
-        await switchAircraftModel(conversationAircraftModel);
+        switchAircraftModel(conversationAircraftModel);
         
-        // Add a small delay to ensure the aircraft model switch completes
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait for the React state update to complete before continuing
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
       
-      // Switch to the conversation using the correct aircraft model
+      // Switch to the conversation - this will load the messages
+      console.log('📋 Switching to conversation:', id);
       await switchConversation(id, conversationAircraftModel);
       
       console.log('✅ Conversation switch completed, closing sidebar');

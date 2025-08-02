@@ -302,16 +302,16 @@ export const useMultiChat = () => {
     console.log('🔄 switchConversation called:', { conversationId, aircraftModel, currentAircraftModel });
     
     try {
-      // Atomic update: set loading, current conversation, and clear previous messages
+      // Set loading and update current conversation, but DON'T clear messages yet
       updateAircraftState(aircraftModel, {
         isLoading: true,
         currentConversation: conversationId,
-        messages: [] // Clear previous messages immediately
+        // Keep existing messages to avoid flash of empty state
       });
       
       console.log('📋 Updated currentConversation state to:', conversationId);
       
-      // Load messages for this conversation
+      // Load messages for this conversation - this will update the messages
       console.log('📥 Loading messages for conversation:', conversationId);
       await loadMessages(conversationId, aircraftModel);
       
