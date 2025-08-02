@@ -62,13 +62,6 @@ const EnhancedMessageInput = ({ onSendMessage, isLoading, disabled, placeholder 
           className="min-h-[44px] max-h-[200px] resize-none pr-12 py-3 text-base leading-6 bg-background border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
           rows={1}
         />
-        <div className="absolute right-3 bottom-3 text-xs text-muted-foreground pointer-events-none">
-          {!disabled && (
-            <span className="bg-background/80 px-1 rounded">
-              {message.includes('\n') ? 'Shift + Enter for new line' : 'Enter to send'}
-            </span>
-          )}
-        </div>
       </div>
       <Button 
         type="submit" 
