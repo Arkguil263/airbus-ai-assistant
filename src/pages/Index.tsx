@@ -41,6 +41,10 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   const handleSendMessage = async (message: string) => {
+    console.log('🚀 handleSendMessage called with:', message);
+    console.log('🚀 Current aircraft model:', currentAircraftModel);
+    console.log('🚀 Current conversation:', currentState.currentConversation);
+    
     try {
       // Create user message
       const userMessage = {
@@ -55,28 +59,43 @@ const Index = () => {
       const currentMessages = getCurrentState().messages;
       const updatedMessages = [...currentMessages, userMessage];
       
+      console.log('📝 Adding user message to state, total messages:', updatedMessages.length);
+      
       updateAircraftState(currentAircraftModel, {
         messages: updatedMessages
       });
       
       // Handle conversation creation if needed and send message
       if (!currentState.currentConversation) {
+        console.log('🆕 Creating new conversation...');
         // Create a new conversation
         const conversation = await createConversation("New Chat", currentAircraftModel);
         if (conversation) {
+          console.log('✅ New conversation created:', conversation);
           await switchConversation(conversation, currentAircraftModel);
           // Send the message with current messages state
           await sendMessage(message, currentAircraftModel, updatedMessages);
+        } else {
+          console.error('❌ Failed to create conversation');
         }
       } else {
+        console.log('📤 Sending message to existing conversation...');
         // Send message to existing conversation with current messages state
         await sendMessage(message, currentAircraftModel, updatedMessages);
       }
     } catch (error) {
+      console.error('❌ Error in handleSendMessage:', error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: `Failed to send message: ${error.message || 'Please try again.'}`,
         variant: "destructive",
+      });
+      
+      // Remove pending message on error
+      const currentMessages = getCurrentState().messages;
+      const cleanMessages = currentMessages.filter(m => !m.isPending);
+      updateAircraftState(currentAircraftModel, {
+        messages: cleanMessages
       });
     }
   };

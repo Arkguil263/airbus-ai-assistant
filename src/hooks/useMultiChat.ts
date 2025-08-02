@@ -124,10 +124,20 @@ export const useMultiChat = () => {
 
   // Send message for specific aircraft model (user message already added in UI)
   const sendMessage = async (content: string, aircraftModel: string, currentMessages?: Message[]) => {
-    if (!user) return;
+    console.log('🚀 sendMessage called with:', { content, aircraftModel, currentMessagesLength: currentMessages?.length });
+    
+    if (!user) {
+      console.error('❌ No user found in sendMessage');
+      return;
+    }
     
     const currentState = aircraftStates[aircraftModel];
-    if (!currentState.currentConversation) return;
+    if (!currentState.currentConversation) {
+      console.error('❌ No current conversation in sendMessage');
+      return;
+    }
+
+    console.log('📡 Sending to conversation:', currentState.currentConversation);
 
     try {
       // Set loading state and add typing indicator
@@ -143,10 +153,14 @@ export const useMultiChat = () => {
 
       // Use provided messages or current state messages
       const baseMessages = currentMessages || aircraftStates[aircraftModel].messages;
+      console.log('📝 Adding typing indicator, base messages:', baseMessages.length);
+      
       updateAircraftState(aircraftModel, {
         messages: [...baseMessages, typingMessage]
       });
 
+      console.log('📡 Calling edge function chat-assistant...');
+      
       // Call the edge function
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: {
@@ -156,9 +170,19 @@ export const useMultiChat = () => {
         }
       });
 
+      console.log('📡 Edge function response:', { data, error });
+
       if (error) {
+        console.error('❌ Edge function error:', error);
         throw error;
       }
+
+      if (!data || !data.response) {
+        console.error('❌ No response data from edge function:', data);
+        throw new Error('No response received from AI assistant');
+      }
+
+      console.log('✅ Received AI response:', data.response);
 
       // Create assistant message from response
       const assistantMessage: Message = {
@@ -174,6 +198,8 @@ export const useMultiChat = () => {
         .filter(m => !m.isTyping) // Remove typing indicator
         .map(m => m.isPending ? { ...m, isPending: false } : m) // Confirm user message
         .concat(assistantMessage); // Add assistant response
+
+      console.log('✅ Final messages update:', updatedMessages.length);
 
       updateAircraftState(aircraftModel, {
         messages: updatedMessages,
