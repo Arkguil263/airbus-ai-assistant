@@ -43,6 +43,7 @@ export type Database = {
           aircraft_model: string
           created_at: string
           id: string
+          thread_id: string | null
           title: string | null
           updated_at: string
           user_id: string
@@ -51,6 +52,7 @@ export type Database = {
           aircraft_model?: string
           created_at?: string
           id?: string
+          thread_id?: string | null
           title?: string | null
           updated_at?: string
           user_id: string
@@ -59,6 +61,7 @@ export type Database = {
           aircraft_model?: string
           created_at?: string
           id?: string
+          thread_id?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string

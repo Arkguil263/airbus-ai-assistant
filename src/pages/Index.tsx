@@ -189,7 +189,7 @@ const Index = () => {
                   <EnhancedMessageInput 
                     onSendMessage={handleSendMessage}
                     isLoading={aircraftStates.A320.isLoading}
-                    placeholder={aircraftStates.A320.currentConversation ? "Ask me a question" : "Start a conversation - Send a message to begin chatting with your A320 AI assistant"}
+                    placeholder="Ask me a question"
                   />
                 </div>
               </TabsContent>
@@ -200,7 +200,7 @@ const Index = () => {
                   <EnhancedMessageInput 
                     onSendMessage={handleSendMessage}
                     isLoading={aircraftStates.A330.isLoading}
-                    placeholder={aircraftStates.A330.currentConversation ? "Ask me a question" : "Start a conversation - Send a message to begin chatting with your A330 AI assistant"}
+                    placeholder="Ask me a question"
                   />
                 </div>
               </TabsContent>
@@ -211,7 +211,7 @@ const Index = () => {
                   <EnhancedMessageInput 
                     onSendMessage={handleSendMessage}
                     isLoading={aircraftStates.A350.isLoading}
-                    placeholder={aircraftStates.A350.currentConversation ? "Ask me a question" : "Start a conversation - Send a message to begin chatting with your A350 AI assistant"}
+                    placeholder="Ask me a question"
                   />
                 </div>
               </TabsContent>

@@ -57,30 +57,59 @@ serve(async (req) => {
 
     const assistantId = assistantData.assistant_id;
 
-    // Create a thread with OpenAI
-    console.log('Creating OpenAI thread...');
-    const threadResponse = await fetch('https://api.openai.com/v1/threads', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2'
-      },
-      body: JSON.stringify({})
-    });
+    // Get or create OpenAI thread
+    console.log('Getting conversation and thread info...');
+    const { data: conversationData, error: conversationError } = await supabase
+      .from('conversations')
+      .select('thread_id')
+      .eq('id', conversationId)
+      .single();
 
-    if (!threadResponse.ok) {
-      const error = await threadResponse.text();
-      console.error('Thread creation failed:', error);
-      throw new Error(`Failed to create thread: ${error}`);
+    if (conversationError) {
+      throw new Error(`Failed to get conversation: ${conversationError.message}`);
     }
 
-    const thread = await threadResponse.json();
-    console.log('Thread created:', thread.id);
+    let threadId = conversationData.thread_id;
+
+    // Create thread if it doesn't exist
+    if (!threadId) {
+      console.log('Creating new OpenAI thread...');
+      const threadResponse = await fetch('https://api.openai.com/v1/threads', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+          'OpenAI-Beta': 'assistants=v2'
+        },
+        body: JSON.stringify({})
+      });
+
+      if (!threadResponse.ok) {
+        const error = await threadResponse.text();
+        console.error('Thread creation failed:', error);
+        throw new Error(`Failed to create thread: ${error}`);
+      }
+
+      const thread = await threadResponse.json();
+      threadId = thread.id;
+      console.log('New thread created:', threadId);
+
+      // Store thread_id in conversation
+      const { error: updateError } = await supabase
+        .from('conversations')
+        .update({ thread_id: threadId })
+        .eq('id', conversationId);
+
+      if (updateError) {
+        console.error('Failed to store thread_id:', updateError);
+      }
+    } else {
+      console.log('Using existing thread:', threadId);
+    }
 
     // Add message to thread
     console.log('Adding message to thread...');
-    const messageResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+    const messageResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
@@ -101,7 +130,7 @@ serve(async (req) => {
 
     // Create and poll run
     console.log('Creating run with assistant...');
-    const runResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+    const runResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
@@ -134,7 +163,7 @@ serve(async (req) => {
 
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const statusResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+      const statusResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${run.id}`, {
         headers: {
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
           'OpenAI-Beta': 'assistants=v2'
@@ -156,7 +185,7 @@ serve(async (req) => {
 
     // Get the assistant's response
     console.log('Fetching assistant response...');
-    const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+    const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
       headers: {
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'OpenAI-Beta': 'assistants=v2'
@@ -210,7 +239,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       response: assistantResponse,
-      threadId: thread.id
+      threadId: threadId
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
