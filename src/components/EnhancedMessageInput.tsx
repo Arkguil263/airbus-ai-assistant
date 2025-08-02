@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
@@ -13,6 +13,18 @@ interface EnhancedMessageInputProps {
 const EnhancedMessageInput = ({ onSendMessage, isLoading, disabled, placeholder }: EnhancedMessageInputProps) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea based on content
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      // Reset height to auto to get accurate scrollHeight
+      textarea.style.height = 'auto';
+      // Set height to scrollHeight, with min and max constraints
+      const newHeight = Math.min(Math.max(textarea.scrollHeight, 40), 120);
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, [message]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +51,8 @@ const EnhancedMessageInput = ({ onSendMessage, isLoading, disabled, placeholder 
           onKeyDown={handleKeyDown}
           placeholder={placeholder || (disabled ? "Select a conversation to start chatting" : "Message Airbus AI...")}
           disabled={disabled || isLoading}
-          className="h-[60px] resize-none overflow-y-auto pr-12 py-3 text-base leading-6 bg-background border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-          rows={2}
+          className="min-h-[40px] max-h-[120px] resize-none overflow-y-auto pr-12 py-3 text-base leading-6 bg-background border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+          rows={1}
         />
       </div>
       <Button 
