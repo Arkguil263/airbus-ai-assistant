@@ -160,8 +160,11 @@ export const useMultiChat = () => {
       const baseMessages = currentMessages || aircraftStates[aircraftModel].messages;
       console.log('📝 Adding typing indicator, base messages:', baseMessages.length);
       
+      // Track complete message history throughout the process
+      const messagesWithTyping = [...baseMessages, typingMessage];
+      
       updateAircraftState(aircraftModel, {
-        messages: [...baseMessages, typingMessage]
+        messages: messagesWithTyping
       });
 
       console.log('📡 Calling edge function chat-assistant...');
@@ -197,10 +200,8 @@ export const useMultiChat = () => {
         created_at: new Date().toISOString(),
       };
 
-      // Update messages: remove typing indicator, add assistant message, mark user message as confirmed
-      const finalState = aircraftStates[aircraftModel];
-      const updatedMessages = finalState.messages
-        .filter(m => !m.isTyping) // Remove typing indicator
+      // Update messages: use baseMessages (which includes user message) to ensure consistency
+      const updatedMessages = baseMessages
         .map(m => m.isPending ? { ...m, isPending: false } : m) // Confirm user message
         .concat(assistantMessage); // Add assistant response
 
