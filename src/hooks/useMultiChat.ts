@@ -7,6 +7,8 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   created_at: string;
+  isPending?: boolean;
+  isTyping?: boolean;
 }
 
 export interface Conversation {
@@ -127,9 +129,36 @@ export const useMultiChat = () => {
     const currentState = aircraftStates[aircraftModel];
     if (!currentState.currentConversation) return;
 
-    updateAircraftState(aircraftModel, { isLoading: true });
+    // Create optimistic user message
+    const optimisticUserMessage: Message = {
+      id: `temp-${Date.now()}`,
+      role: 'user',
+      content,
+      created_at: new Date().toISOString(),
+      isPending: true
+    };
+
+    // Show user message immediately
+    updateAircraftState(aircraftModel, {
+      messages: [...currentState.messages, optimisticUserMessage],
+      isLoading: true
+    });
 
     try {
+      // Add typing indicator
+      const typingMessage: Message = {
+        id: `typing-${Date.now()}`,
+        role: 'assistant',
+        content: '',
+        created_at: new Date().toISOString(),
+        isTyping: true
+      };
+
+      const stateWithUser = aircraftStates[aircraftModel];
+      updateAircraftState(aircraftModel, {
+        messages: [...stateWithUser.messages, typingMessage]
+      });
+
       // Call the edge function
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: {
@@ -143,12 +172,19 @@ export const useMultiChat = () => {
         throw error;
       }
 
-      // Reload messages to get the latest from database
+      // Reload messages to get the latest from database (this will replace optimistic and typing messages)
       await loadMessages(currentState.currentConversation, aircraftModel);
       await loadConversations(aircraftModel); // Update conversation list with new timestamp
 
     } catch (error) {
       console.error('Error sending message:', error);
+      // Remove optimistic and typing messages on error
+      const errorState = aircraftStates[aircraftModel];
+      const cleanMessages = errorState.messages.filter(m => !m.isPending && !m.isTyping);
+      updateAircraftState(aircraftModel, { 
+        messages: cleanMessages,
+        isLoading: false 
+      });
       throw error;
     } finally {
       updateAircraftState(aircraftModel, { isLoading: false });

@@ -9,7 +9,7 @@ import { useMultiChat } from '@/hooks/useMultiChat';
 import { useToast } from '@/hooks/use-toast';
 import ConversationList from '@/components/ConversationList';
 import MessageList from '@/components/MessageList';
-import MessageInput from '@/components/MessageInput';
+import EnhancedMessageInput from '@/components/EnhancedMessageInput';
 
 
 const Index = () => {
@@ -157,7 +157,7 @@ const Index = () => {
               <TabsContent value="A320" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} aircraftModel="A320" />
-                  <MessageInput 
+                  <EnhancedMessageInput 
                     onSendMessage={handleSendMessage}
                     isLoading={aircraftStates.A320.isLoading}
                     placeholder={aircraftStates.A320.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A320 AI assistant"}
@@ -168,7 +168,7 @@ const Index = () => {
               <TabsContent value="A330" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A330.messages} isLoading={aircraftStates.A330.isLoading} aircraftModel="A330" />
-                  <MessageInput 
+                  <EnhancedMessageInput 
                     onSendMessage={handleSendMessage}
                     isLoading={aircraftStates.A330.isLoading}
                     placeholder={aircraftStates.A330.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A330 AI assistant"}
@@ -179,7 +179,7 @@ const Index = () => {
               <TabsContent value="A350" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A350.messages} isLoading={aircraftStates.A350.isLoading} aircraftModel="A350" />
-                  <MessageInput 
+                  <EnhancedMessageInput 
                     onSendMessage={handleSendMessage}
                     isLoading={aircraftStates.A350.isLoading}
                     placeholder={aircraftStates.A350.currentConversation ? "Type your message..." : "Start a conversation - Send a message to begin chatting with your A350 AI assistant"}

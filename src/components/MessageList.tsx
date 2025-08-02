@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card } from '@/components/ui/card';
-import { Bot, User } from 'lucide-react';
-import { Message } from '@/hooks/useChat';
-import TypingIndicator from './TypingIndicator';
+import { Bot } from 'lucide-react';
+import { Message } from '@/hooks/useMultiChat';
+import ChatMessage from './ChatMessage';
 
 interface MessageListProps {
   messages: Message[];
@@ -16,7 +15,17 @@ const MessageList = ({ messages, isLoading, aircraftModel }: MessageListProps) =
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const scrollElement = scrollRef.current;
+      const isNearBottom = scrollElement.scrollHeight - scrollElement.scrollTop <= scrollElement.clientHeight + 100;
+      
+      if (isNearBottom) {
+        setTimeout(() => {
+          scrollElement.scrollTo({
+            top: scrollElement.scrollHeight,
+            behavior: 'smooth'
+          });
+        }, 100);
+      }
     }
   }, [messages]);
 
@@ -32,42 +41,14 @@ const MessageList = ({ messages, isLoading, aircraftModel }: MessageListProps) =
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6 pb-4">
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                {message.role === 'assistant' && (
-                  <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-primary" />
-                  </div>
-                )}
-                
-                <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground ml-auto'
-                      : 'bg-muted'
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  <p className="text-xs opacity-70 mt-1">
-                    {new Date(message.created_at).toLocaleTimeString()}
-                  </p>
-                </div>
-
-                {message.role === 'user' && (
-                  <div className="flex-shrink-0 w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-secondary-foreground" />
-                  </div>
-                )}
-              </div>
+              <ChatMessage 
+                key={message.id} 
+                message={message} 
+                aircraftModel={aircraftModel}
+              />
             ))}
-            
-            {isLoading && <TypingIndicator aircraftModel={aircraftModel} />}
           </div>
         )}
       </ScrollArea>
