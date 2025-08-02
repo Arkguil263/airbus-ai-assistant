@@ -42,7 +42,7 @@ const Index = () => {
 
   const handleSendMessage = async (message: string) => {
     try {
-      // Always add user message immediately to state
+      // Create user message
       const userMessage = {
         id: `temp-${Date.now()}`,
         role: 'user' as const,
@@ -51,10 +51,12 @@ const Index = () => {
         isPending: true
       };
 
-      // Add user message to current aircraft state immediately
-      const updatedState = getCurrentState();
+      // Immediately add user message to state using functional update
+      const currentMessages = getCurrentState().messages;
+      const updatedMessages = [...currentMessages, userMessage];
+      
       updateAircraftState(currentAircraftModel, {
-        messages: [...updatedState.messages, userMessage]
+        messages: updatedMessages
       });
       
       // Handle conversation creation if needed and send message
@@ -63,12 +65,12 @@ const Index = () => {
         const conversation = await createConversation("New Chat", currentAircraftModel);
         if (conversation) {
           await switchConversation(conversation, currentAircraftModel);
-          // Send the message after conversation is created
-          await sendMessage(message, currentAircraftModel);
+          // Send the message with current messages state
+          await sendMessage(message, currentAircraftModel, updatedMessages);
         }
       } else {
-        // Send message to existing conversation
-        await sendMessage(message, currentAircraftModel);
+        // Send message to existing conversation with current messages state
+        await sendMessage(message, currentAircraftModel, updatedMessages);
       }
     } catch (error) {
       toast({

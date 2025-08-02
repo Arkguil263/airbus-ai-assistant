@@ -122,8 +122,8 @@ export const useMultiChat = () => {
     return data.id;
   };
 
-  // Send message for specific aircraft model (simplified - user message already added in UI)
-  const sendMessage = async (content: string, aircraftModel: string) => {
+  // Send message for specific aircraft model (user message already added in UI)
+  const sendMessage = async (content: string, aircraftModel: string, currentMessages?: Message[]) => {
     if (!user) return;
     
     const currentState = aircraftStates[aircraftModel];
@@ -141,10 +141,10 @@ export const useMultiChat = () => {
         isTyping: true
       };
 
-      // Add typing indicator to current messages
-      const currentMessages = aircraftStates[aircraftModel].messages;
+      // Use provided messages or current state messages
+      const baseMessages = currentMessages || aircraftStates[aircraftModel].messages;
       updateAircraftState(aircraftModel, {
-        messages: [...currentMessages, typingMessage]
+        messages: [...baseMessages, typingMessage]
       });
 
       // Call the edge function
@@ -176,7 +176,8 @@ export const useMultiChat = () => {
         .concat(assistantMessage); // Add assistant response
 
       updateAircraftState(aircraftModel, {
-        messages: updatedMessages
+        messages: updatedMessages,
+        isLoading: false
       });
 
       // Update conversation list with new timestamp
