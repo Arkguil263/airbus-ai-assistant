@@ -58,6 +58,15 @@ export const useMultiChat = () => {
     }));
   };
 
+  // Generate smart conversation title based on aircraft model and date
+  const generateConversationTitle = (aircraftModel: string): string => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.toLocaleDateString('en-US', { month: 'short' });
+    const day = now.getDate();
+    return `${aircraftModel} Chat ${year}/${month}/${day}`;
+  };
+
   // Load conversations for specific aircraft model
   const loadConversations = async (aircraftModel: string) => {
     if (!user) return;
@@ -303,5 +312,6 @@ export const useMultiChat = () => {
     deleteConversation,
     switchConversation,
     switchAircraftModel,
+    generateConversationTitle,
   };
 };

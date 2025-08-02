@@ -28,6 +28,7 @@ const Index = () => {
     deleteConversation,
     switchAircraftModel,
     updateAircraftState,
+    generateConversationTitle,
   } = useMultiChat();
 
   // Get current aircraft state
@@ -68,8 +69,9 @@ const Index = () => {
       // Handle conversation creation if needed and send message
       if (!currentState.currentConversation) {
         console.log('🆕 Creating new conversation...');
-        // Create a new conversation
-        const conversation = await createConversation("New Chat", currentAircraftModel);
+        // Create a new conversation with smart title
+        const smartTitle = generateConversationTitle(currentAircraftModel);
+        const conversation = await createConversation(smartTitle, currentAircraftModel);
         if (conversation) {
           console.log('✅ New conversation created:', conversation);
           await switchConversation(conversation, currentAircraftModel);

@@ -20,7 +20,8 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
     getCurrentState, 
     createConversation, 
     deleteConversation, 
-    switchConversation 
+    switchConversation,
+    generateConversationTitle
   } = useMultiChat();
   
   const currentState = getCurrentState();
@@ -63,7 +64,10 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
           <h2 className="text-lg font-semibold">Conversations</h2>
           <Button
             size="sm"
-            onClick={() => setShowNewConversation(true)}
+            onClick={() => {
+              setShowNewConversation(true);
+              setNewTitle(generateConversationTitle(currentAircraftModel));
+            }}
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
