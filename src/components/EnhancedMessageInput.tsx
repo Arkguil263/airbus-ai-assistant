@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
@@ -19,22 +19,6 @@ const EnhancedMessageInput = ({ onSendMessage, isLoading, disabled, placeholder 
     if (message.trim() && !isLoading && !disabled) {
       onSendMessage(message.trim());
       setMessage('');
-      resetTextareaHeight();
-    }
-  };
-
-  const resetTextareaHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
-  };
-
-  const adjustTextareaHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      const scrollHeight = textareaRef.current.scrollHeight;
-      const maxHeight = 200; // Maximum height in pixels
-      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
     }
   };
 
@@ -44,10 +28,6 @@ const EnhancedMessageInput = ({ onSendMessage, isLoading, disabled, placeholder 
       handleSubmit(e);
     }
   };
-
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [message]);
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-3 p-4 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -59,8 +39,8 @@ const EnhancedMessageInput = ({ onSendMessage, isLoading, disabled, placeholder 
           onKeyDown={handleKeyDown}
           placeholder={placeholder || (disabled ? "Select a conversation to start chatting" : "Message Airbus AI...")}
           disabled={disabled || isLoading}
-          className="min-h-[44px] max-h-[200px] resize-none pr-12 py-3 text-base leading-6 bg-background border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-          rows={1}
+          className="h-[60px] resize-none overflow-y-auto pr-12 py-3 text-base leading-6 bg-background border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+          rows={2}
         />
       </div>
       <Button 
