@@ -122,30 +122,17 @@ export const useMultiChat = () => {
     return data.id;
   };
 
-  // Send message for specific aircraft model
+  // Send message for specific aircraft model (simplified - user message already added in UI)
   const sendMessage = async (content: string, aircraftModel: string) => {
     if (!user) return;
     
     const currentState = aircraftStates[aircraftModel];
     if (!currentState.currentConversation) return;
 
-    // Create optimistic user message
-    const optimisticUserMessage: Message = {
-      id: `temp-${Date.now()}`,
-      role: 'user',
-      content,
-      created_at: new Date().toISOString(),
-      isPending: true
-    };
-
-    // Show user message immediately
-    updateAircraftState(aircraftModel, {
-      messages: [...currentState.messages, optimisticUserMessage],
-      isLoading: true
-    });
-
     try {
-      // Add typing indicator
+      // Set loading state and add typing indicator
+      updateAircraftState(aircraftModel, { isLoading: true });
+      
       const typingMessage: Message = {
         id: `typing-${Date.now()}`,
         role: 'assistant',
@@ -154,9 +141,10 @@ export const useMultiChat = () => {
         isTyping: true
       };
 
-      const stateWithUser = aircraftStates[aircraftModel];
+      // Add typing indicator to current messages
+      const currentMessages = aircraftStates[aircraftModel].messages;
       updateAircraftState(aircraftModel, {
-        messages: [...stateWithUser.messages, typingMessage]
+        messages: [...currentMessages, typingMessage]
       });
 
       // Call the edge function
@@ -178,9 +166,9 @@ export const useMultiChat = () => {
 
     } catch (error) {
       console.error('Error sending message:', error);
-      // Remove optimistic and typing messages on error
+      // Remove typing messages on error, keep user messages
       const errorState = aircraftStates[aircraftModel];
-      const cleanMessages = errorState.messages.filter(m => !m.isPending && !m.isTyping);
+      const cleanMessages = errorState.messages.filter(m => !m.isTyping);
       updateAircraftState(aircraftModel, { 
         messages: cleanMessages,
         isLoading: false 
@@ -252,6 +240,7 @@ export const useMultiChat = () => {
     currentAircraftModel,
     aircraftStates,
     getCurrentState,
+    updateAircraftState,
     loadConversations,
     loadMessages,
     createConversation,

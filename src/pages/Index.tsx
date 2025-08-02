@@ -27,6 +27,7 @@ const Index = () => {
     switchConversation,
     deleteConversation,
     switchAircraftModel,
+    updateAircraftState,
   } = useMultiChat();
 
   // Get current aircraft state
@@ -40,34 +41,41 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   const handleSendMessage = async (message: string) => {
-    if (!currentState.currentConversation) {
-      // Create a new conversation
-      const conversation = await createConversation("New Chat", currentAircraftModel);
-      if (conversation) {
-        await switchConversation(conversation, currentAircraftModel);
-        // Send message after switching
-        setTimeout(async () => {
-          try {
-            await sendMessage(message, currentAircraftModel);
-          } catch (error) {
-            toast({
-              title: "Error",
-              description: "Failed to send message. Please try again.",
-              variant: "destructive",
-            });
-          }
-        }, 100);
-      }
-    } else {
-      try {
+    try {
+      // Always add user message immediately to state
+      const userMessage = {
+        id: `temp-${Date.now()}`,
+        role: 'user' as const,
+        content: message,
+        created_at: new Date().toISOString(),
+        isPending: true
+      };
+
+      // Add user message to current aircraft state immediately
+      const updatedState = getCurrentState();
+      updateAircraftState(currentAircraftModel, {
+        messages: [...updatedState.messages, userMessage]
+      });
+      
+      // Handle conversation creation if needed and send message
+      if (!currentState.currentConversation) {
+        // Create a new conversation
+        const conversation = await createConversation("New Chat", currentAircraftModel);
+        if (conversation) {
+          await switchConversation(conversation, currentAircraftModel);
+          // Send the message after conversation is created
+          await sendMessage(message, currentAircraftModel);
+        }
+      } else {
+        // Send message to existing conversation
         await sendMessage(message, currentAircraftModel);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to send message. Please try again.",
-          variant: "destructive",
-        });
       }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
