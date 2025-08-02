@@ -73,15 +73,15 @@ const Index = () => {
         if (conversation) {
           console.log('✅ New conversation created:', conversation);
           await switchConversation(conversation, currentAircraftModel);
-          // Send the message with current messages state
-          await sendMessage(message, currentAircraftModel, updatedMessages);
+          // Send the message with conversation ID directly to avoid race condition
+          await sendMessage(message, currentAircraftModel, updatedMessages, conversation);
         } else {
           console.error('❌ Failed to create conversation');
         }
       } else {
         console.log('📤 Sending message to existing conversation...');
         // Send message to existing conversation with current messages state
-        await sendMessage(message, currentAircraftModel, updatedMessages);
+        await sendMessage(message, currentAircraftModel, updatedMessages, currentState.currentConversation);
       }
     } catch (error) {
       console.error('❌ Error in handleSendMessage:', error);

@@ -123,21 +123,22 @@ export const useMultiChat = () => {
   };
 
   // Send message for specific aircraft model (user message already added in UI)
-  const sendMessage = async (content: string, aircraftModel: string, currentMessages?: Message[]) => {
-    console.log('🚀 sendMessage called with:', { content, aircraftModel, currentMessagesLength: currentMessages?.length });
+  const sendMessage = async (content: string, aircraftModel: string, currentMessages?: Message[], conversationId?: string) => {
+    console.log('🚀 sendMessage called with:', { content, aircraftModel, currentMessagesLength: currentMessages?.length, conversationId });
     
     if (!user) {
       console.error('❌ No user found in sendMessage');
       return;
     }
     
-    const currentState = aircraftStates[aircraftModel];
-    if (!currentState.currentConversation) {
-      console.error('❌ No current conversation in sendMessage');
+    // Use provided conversationId or fallback to state
+    const targetConversationId = conversationId || aircraftStates[aircraftModel].currentConversation;
+    if (!targetConversationId) {
+      console.error('❌ No conversation ID available in sendMessage');
       return;
     }
 
-    console.log('📡 Sending to conversation:', currentState.currentConversation);
+    console.log('📡 Sending to conversation:', targetConversationId);
 
     try {
       // Set loading state and add typing indicator
@@ -165,7 +166,7 @@ export const useMultiChat = () => {
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: {
           message: content,
-          conversationId: currentState.currentConversation,
+          conversationId: targetConversationId,
           aircraftModel: aircraftModel
         }
       });
