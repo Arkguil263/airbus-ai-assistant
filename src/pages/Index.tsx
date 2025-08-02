@@ -125,7 +125,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border p-4 bg-card">
         <div className="flex items-center justify-between">
