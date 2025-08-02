@@ -160,9 +160,27 @@ export const useMultiChat = () => {
         throw error;
       }
 
-      // Reload messages to get the latest from database (this will replace optimistic and typing messages)
-      await loadMessages(currentState.currentConversation, aircraftModel);
-      await loadConversations(aircraftModel); // Update conversation list with new timestamp
+      // Create assistant message from response
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: data.response,
+        created_at: new Date().toISOString(),
+      };
+
+      // Update messages: remove typing indicator, add assistant message, mark user message as confirmed
+      const finalState = aircraftStates[aircraftModel];
+      const updatedMessages = finalState.messages
+        .filter(m => !m.isTyping) // Remove typing indicator
+        .map(m => m.isPending ? { ...m, isPending: false } : m) // Confirm user message
+        .concat(assistantMessage); // Add assistant response
+
+      updateAircraftState(aircraftModel, {
+        messages: updatedMessages
+      });
+
+      // Update conversation list with new timestamp
+      await loadConversations(aircraftModel);
 
     } catch (error) {
       console.error('Error sending message:', error);
