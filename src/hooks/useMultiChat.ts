@@ -47,15 +47,20 @@ export const useMultiChat = () => {
   // Get current aircraft state
   const getCurrentState = () => aircraftStates[currentAircraftModel];
 
-  // Update specific aircraft state
-  const updateAircraftState = (aircraftModel: string, updates: Partial<AircraftState>) => {
-    setAircraftStates(prev => ({
-      ...prev,
-      [aircraftModel]: {
-        ...prev[aircraftModel],
-        ...updates,
-      },
-    }));
+  // Update specific aircraft state with callback support for atomic updates
+  const updateAircraftState = (aircraftModel: string, updates: Partial<AircraftState> | ((prevState: AircraftState) => Partial<AircraftState>)) => {
+    setAircraftStates(prev => {
+      const currentState = prev[aircraftModel];
+      const finalUpdates = typeof updates === 'function' ? updates(currentState) : updates;
+      
+      return {
+        ...prev,
+        [aircraftModel]: {
+          ...currentState,
+          ...finalUpdates,
+        },
+      };
+    });
   };
 
   // Generate smart conversation title based on aircraft model and date
@@ -120,26 +125,17 @@ export const useMultiChat = () => {
       // Update aircraft state with loaded messages
       updateAircraftState(aircraftModel, {
         messages: messages,
+        isLoading: false
       });
       
       console.log('✅ Messages state updated for aircraft:', aircraftModel, 'with', messages.length, 'messages');
-      
-      // Verify state was updated
-      setTimeout(() => {
-        const currentState = aircraftStates[aircraftModel];
-        console.log('🔍 State verification after loadMessages:', {
-          aircraftModel,
-          currentConversation: currentState?.currentConversation,
-          messagesInState: currentState?.messages?.length || 0,
-          stateMessages: currentState?.messages?.map(m => ({ role: m.role, content: m.content?.substring(0, 30) })) || []
-        });
-      }, 100);
       
     } catch (error) {
       console.error('❌ loadMessages failed:', error);
       // Set empty messages array on error to prevent UI issues
       updateAircraftState(aircraftModel, {
         messages: [],
+        isLoading: false
       });
       throw error;
     }
@@ -306,32 +302,23 @@ export const useMultiChat = () => {
     console.log('🔄 switchConversation called:', { conversationId, aircraftModel, currentAircraftModel });
     
     try {
-      // Step 1: Set loading state
-      updateAircraftState(aircraftModel, { isLoading: true });
-      
-      // Step 2: Update current conversation
+      // Atomic update: set loading, current conversation, and clear previous messages
       updateAircraftState(aircraftModel, {
+        isLoading: true,
         currentConversation: conversationId,
+        messages: [] // Clear previous messages immediately
       });
       
       console.log('📋 Updated currentConversation state to:', conversationId);
       
-      // Step 3: Load messages for this conversation
+      // Load messages for this conversation
       console.log('📥 Loading messages for conversation:', conversationId);
       await loadMessages(conversationId, aircraftModel);
       
-      // Step 4: Verify state update
-      const updatedState = aircraftStates[aircraftModel];
-      console.log('✅ switchConversation completed:', {
-        conversationId,
-        aircraftModel,
-        messagesLoaded: updatedState?.messages?.length || 0,
-        currentConversation: updatedState?.currentConversation
-      });
+      console.log('✅ switchConversation completed successfully');
       
     } catch (error) {
       console.error('❌ Error in switchConversation:', error);
-    } finally {
       updateAircraftState(aircraftModel, { isLoading: false });
     }
   };
