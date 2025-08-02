@@ -21,11 +21,20 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
     createConversation, 
     deleteConversation, 
     switchConversation,
+    switchAircraftModel,
     generateConversationTitle
   } = useMultiChat();
   
+  // Get all conversations from all aircraft models
+  const allConversations = Object.values(aircraftStates).flatMap(state => state.conversations);
+  // Sort by updated_at descending
+  const sortedConversations = allConversations.sort((a, b) => 
+    new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
+  
+  // Get current conversation from current aircraft model
   const currentState = getCurrentState();
-  const { conversations, currentConversation } = currentState;
+  const { currentConversation } = currentState;
   const { toast } = useToast();
 
   const handleCreateConversation = async () => {
@@ -44,38 +53,31 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
     }
   };
 
-  const handleDeleteConversation = async (id: string) => {
-    await deleteConversation(id, currentAircraftModel);
+  const handleDeleteConversation = async (id: string, conversationAircraftModel: string) => {
+    await deleteConversation(id, conversationAircraftModel);
     toast({
       title: "Conversation deleted",
       description: "Conversation has been removed",
     });
   };
 
-  const handleSwitchConversation = async (id: string) => {
+  const handleSwitchConversation = async (id: string, conversationAircraftModel: string) => {
     console.log('🎯 Conversation clicked:', { 
       conversationId: id, 
+      conversationAircraftModel,
       currentAircraftModel,
-      conversationTitle: conversations.find(c => c.id === id)?.title
+      conversationTitle: sortedConversations.find(c => c.id === id)?.title
     });
     
     try {
-      // Find the conversation to get its aircraft model
-      const conversation = conversations.find(c => c.id === id);
-      if (!conversation) {
-        console.error('❌ Conversation not found:', id);
-        return;
+      // If conversation is from a different aircraft model, switch to that model first
+      if (conversationAircraftModel !== currentAircraftModel) {
+        console.log('🔄 Switching aircraft model from', currentAircraftModel, 'to', conversationAircraftModel);
+        switchAircraftModel(conversationAircraftModel);
       }
       
-      console.log('📋 Conversation details:', {
-        id: conversation.id,
-        title: conversation.title,
-        aircraft_model: conversation.aircraft_model,
-        current_aircraft_model: currentAircraftModel
-      });
-      
-      // Switch to the conversation (this will load messages)
-      await switchConversation(id, currentAircraftModel);
+      // Switch to the conversation using the correct aircraft model
+      await switchConversation(id, conversationAircraftModel);
       
       console.log('✅ Conversation switch completed, closing sidebar');
       onClose?.();
@@ -138,7 +140,7 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
 
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {conversations.length === 0 ? (
+          {sortedConversations.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No conversations yet</p>
@@ -146,7 +148,7 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
             </div>
           ) : (
             <div className="space-y-1">
-              {conversations.map((conversation) => (
+              {sortedConversations.map((conversation) => (
                 <div
                   key={conversation.id}
                   className={`group flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-colors ${
@@ -157,11 +159,20 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
                 >
                   <div
                     className="flex-1 min-w-0"
-                    onClick={() => handleSwitchConversation(conversation.id)}
+                    onClick={() => handleSwitchConversation(conversation.id, conversation.aircraft_model)}
                   >
-                    <p className="font-medium truncate text-sm">
-                      {conversation.title || 'Untitled Conversation'}
-                    </p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium truncate text-sm">
+                        {conversation.title || 'Untitled Conversation'}
+                      </p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                        conversation.aircraft_model === currentAircraftModel 
+                          ? 'bg-primary/10 text-primary border-primary/20' 
+                          : 'bg-muted text-muted-foreground border-border'
+                      }`}>
+                        {conversation.aircraft_model}
+                      </span>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {new Date(conversation.updated_at).toLocaleDateString()}
                     </p>
@@ -172,7 +183,7 @@ const ConversationList = ({ onClose }: ConversationListProps) => {
                     className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteConversation(conversation.id);
+                      handleDeleteConversation(conversation.id, conversation.aircraft_model);
                     }}
                   >
                     <Trash2 className="h-4 w-4" />
