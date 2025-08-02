@@ -81,6 +81,7 @@ export const useMultiChat = () => {
 
   // Load messages for a conversation
   const loadMessages = async (conversationId: string, aircraftModel: string) => {
+    console.log('📥 Loading messages for conversation:', conversationId);
     const { data, error } = await supabase
       .from('messages')
       .select('*')
@@ -92,8 +93,11 @@ export const useMultiChat = () => {
       return;
     }
 
+    const messages = (data || []) as Message[];
+    console.log('📥 Loaded messages:', messages.length, 'messages:', messages.map(m => `${m.role}: ${m.content?.substring(0, 30)}...`));
+    
     updateAircraftState(aircraftModel, {
-      messages: (data || []) as Message[],
+      messages: messages,
     });
   };
 
@@ -200,7 +204,7 @@ export const useMultiChat = () => {
         .map(m => m.isPending ? { ...m, isPending: false } : m) // Confirm user message
         .concat(assistantMessage); // Add assistant response
 
-      console.log('✅ Final messages update:', updatedMessages.length);
+      console.log('✅ Final messages update:', updatedMessages.length, 'messages:', updatedMessages.map(m => `${m.role}: ${m.content?.substring(0, 50)}...`));
 
       updateAircraftState(aircraftModel, {
         messages: updatedMessages,
@@ -212,9 +216,13 @@ export const useMultiChat = () => {
 
     } catch (error) {
       console.error('Error sending message:', error);
-      // Remove typing messages on error, keep user messages
+      // Remove typing messages on error, keep user messages (including pending ones)
       const errorState = aircraftStates[aircraftModel];
-      const cleanMessages = errorState.messages.filter(m => !m.isTyping);
+      const cleanMessages = errorState.messages
+        .filter(m => !m.isTyping) // Remove typing indicator
+        .map(m => m.isPending ? { ...m, isPending: false } : m); // Mark pending messages as confirmed
+      
+      console.log('⚠️ Error cleanup, preserving messages:', cleanMessages.length);
       updateAircraftState(aircraftModel, { 
         messages: cleanMessages,
         isLoading: false 
