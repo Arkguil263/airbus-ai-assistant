@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [secretWord, setSecretWord] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const { toast } = useToast();
@@ -49,7 +50,7 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(email, password, secretWord);
     
     if (error) {
       toast({
@@ -57,11 +58,17 @@ const Auth = () => {
         description: error.message,
         variant: "destructive",
       });
+      // Clear secret word on failed attempts for security
+      setSecretWord('');
     } else {
       toast({
         title: "Check your email",
         description: "We've sent you a confirmation link to complete your registration.",
       });
+      // Clear all fields on successful signup
+      setEmail('');
+      setPassword('');
+      setSecretWord('');
     }
     
     setIsLoading(false);
@@ -113,6 +120,20 @@ const Auth = () => {
             
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-secret">Secret Word</Label>
+                  <Input
+                    id="signup-secret"
+                    type="password"
+                    placeholder="Enter secret word"
+                    value={secretWord}
+                    onChange={(e) => setSecretWord(e.target.value)}
+                    required
+                  />
+                  <p className="text-sm text-destructive font-medium">
+                    You need to know the secret word to register!
+                  </p>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input

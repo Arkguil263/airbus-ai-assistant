@@ -6,9 +6,10 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, secretWord: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  verifySecretWord: (secretWord: string) => Promise<{ isValid: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,7 +39,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const verifySecretWord = async (secretWord: string) => {
+    try {
+      // Check if the secret word matches any active secret in the database
+      const { data, error } = await supabase
+        .from('registration_secrets')
+        .select('secret_word')
+        .eq('is_active', true)
+        .eq('secret_word', secretWord)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No matching secret word found
+          return { isValid: false, error: "Invalid secret word. This knowledge base belongs to a private group and requires authorization to register." };
+        }
+        return { isValid: false, error: "Error verifying secret word. Please try again." };
+      }
+
+      return { isValid: true };
+    } catch (err) {
+      return { isValid: false, error: "Error verifying secret word. Please try again." };
+    }
+  };
+
+  const signUp = async (email: string, password: string, secretWord: string) => {
+    // First verify the secret word
+    const secretVerification = await verifySecretWord(secretWord);
+    if (!secretVerification.isValid) {
+      return { error: { message: secretVerification.error } };
+    }
+
+    // If secret word is valid, proceed with registration
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -71,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signIn,
       signOut,
+      verifySecretWord,
     }}>
       {children}
     </AuthContext.Provider>
