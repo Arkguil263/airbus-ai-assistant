@@ -75,6 +75,7 @@ export type Database = {
           created_at: string
           id: string
           role: string
+          user_email: string
         }
         Insert: {
           content: string
@@ -82,6 +83,7 @@ export type Database = {
           created_at?: string
           id?: string
           role: string
+          user_email: string
         }
         Update: {
           content?: string
@@ -89,6 +91,7 @@ export type Database = {
           created_at?: string
           id?: string
           role?: string
+          user_email?: string
         }
         Relationships: [
           {

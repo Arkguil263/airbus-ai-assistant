@@ -217,7 +217,8 @@ serve(async (req) => {
       .insert({
         conversation_id: conversationId,
         role: 'user',
-        content: message
+        content: message,
+        user_email: user.email
       });
 
     if (userMessageError) {
@@ -230,7 +231,8 @@ serve(async (req) => {
       .insert({
         conversation_id: conversationId,
         role: 'assistant',
-        content: assistantResponse
+        content: assistantResponse,
+        user_email: user.email
       });
 
     if (assistantMessageError) {
