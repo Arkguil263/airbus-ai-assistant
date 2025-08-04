@@ -124,7 +124,7 @@ const Auth = () => {
                   <Label htmlFor="signup-secret">Secret Word</Label>
                   <Input
                     id="signup-secret"
-                    type="password"
+                    type="text"
                     placeholder="Enter secret word"
                     value={secretWord}
                     onChange={(e) => setSecretWord(e.target.value)}
