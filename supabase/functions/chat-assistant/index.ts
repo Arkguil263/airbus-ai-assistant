@@ -14,47 +14,10 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationId, aircraftModel = 'A320', searchOnly = false } = await req.json();
-    console.log('Chat request:', { message, conversationId, aircraftModel, searchOnly });
+    const { message, conversationId, aircraftModel = 'A320' } = await req.json();
+    console.log('Chat request:', { message, conversationId, aircraftModel });
 
-    // If searchOnly flag is set, return relevant aircraft documentation search results
-    if (searchOnly) {
-      const query = message || '';
-      console.log('Search only request for query:', query);
-      
-      // Return relevant aircraft documentation based on the query
-      const searchResults = {
-        results: [
-          {
-            title: `${aircraftModel} Systems Manual`,
-            content: `Technical documentation for ${aircraftModel} aircraft systems related to: ${query}. This includes operational procedures, system specifications, and maintenance guidelines.`,
-            source: `${aircraftModel} Flight Crew Operating Manual`,
-            confidence: 0.92
-          },
-          {
-            title: `${aircraftModel} Emergency Procedures`,
-            content: `Emergency and abnormal procedures for ${aircraftModel} aircraft systems. Covers safety protocols and emergency responses relevant to: ${query}.`,
-            source: `${aircraftModel} Quick Reference Handbook`,
-            confidence: 0.88
-          },
-          {
-            title: `${aircraftModel} Performance Data`,
-            content: `Performance characteristics and operational limitations for ${aircraftModel} aircraft. Includes takeoff, cruise, and landing performance data related to: ${query}.`,
-            source: `${aircraftModel} Performance Manual`,
-            confidence: 0.85
-          }
-        ],
-        query,
-        aircraftModel,
-        totalResults: 3
-      };
-      
-      return new Response(JSON.stringify(searchResults), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Validate input for normal chat
+    // Validate input
     if (!message || !conversationId) {
       throw new Error('Missing required parameters: message and conversationId');
     }

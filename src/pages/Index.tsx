@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import ConversationList from '@/components/ConversationList';
 import MessageList from '@/components/MessageList';
 import EnhancedMessageInput from '@/components/EnhancedMessageInput';
-import VoiceAgent from '@/components/VoiceAgent';
 
 
 const Index = () => {
@@ -185,9 +184,8 @@ const Index = () => {
               <TabsTrigger value="A350">A350</TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 mx-4 mb-4 space-y-4">
-              <TabsContent value="A320" className="h-full m-0 space-y-4">
-                <VoiceAgent aircraftModel="A320" />
+            <div className="flex-1 mx-4 mb-4">
+              <TabsContent value="A320" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} aircraftModel="A320" />
                   <EnhancedMessageInput 
@@ -198,8 +196,7 @@ const Index = () => {
                 </div>
               </TabsContent>
               
-              <TabsContent value="A330" className="h-full m-0 space-y-4">
-                <VoiceAgent aircraftModel="A330" />
+              <TabsContent value="A330" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A330.messages} isLoading={aircraftStates.A330.isLoading} aircraftModel="A330" />
                   <EnhancedMessageInput 
@@ -210,8 +207,7 @@ const Index = () => {
                 </div>
               </TabsContent>
               
-              <TabsContent value="A350" className="h-full m-0 space-y-4">
-                <VoiceAgent aircraftModel="A350" />
+              <TabsContent value="A350" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A350.messages} isLoading={aircraftStates.A350.isLoading} aircraftModel="A350" />
                   <EnhancedMessageInput 
