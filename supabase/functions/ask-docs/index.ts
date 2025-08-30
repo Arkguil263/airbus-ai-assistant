@@ -6,7 +6,7 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const OPENAI_API_KEY = Deno.env.get("OPENAI_REALTIME_API_KEY")!;
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const VECTOR_STORE_ID = Deno.env.get("OPENAI_VECTOR_STORE_ID")!;
 
 serve(async (req) => {
