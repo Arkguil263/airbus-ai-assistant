@@ -2,22 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Mic, MicOff, Phone, PhoneOff, Send } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-interface LogEntry {
-  timestamp: string;
-  type: 'info' | 'error' | 'user' | 'assistant';
-  message: string;
-}
 
 export default function VoiceAgent() {
   const [connected, setConnected] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
   const [question, setQuestion] = useState("");
-  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [connecting, setConnecting] = useState(false);
   const { toast } = useToast();
 
@@ -26,18 +18,9 @@ export default function VoiceAgent() {
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
 
-  const addLog = (type: LogEntry['type'], message: string) => {
-    setLogs(prev => [...prev, {
-      timestamp: new Date().toLocaleTimeString(),
-      type,
-      message
-    }]);
-  };
-
   const connect = async () => {
     if (connected || connecting) return;
     setConnecting(true);
-    addLog('info', 'Creating session...');
 
     try {
       // 1) Get ephemeral client_secret from Supabase
@@ -52,7 +35,6 @@ export default function VoiceAgent() {
       }
 
       const clientSecret = data.client_secret;
-      addLog('info', 'Ephemeral key obtained');
 
       // 2) Set up WebRTC
       const pc = new RTCPeerConnection();
@@ -64,7 +46,6 @@ export default function VoiceAgent() {
       remoteAudioRef.current = audio;
       
       pc.ontrack = (e) => {
-        addLog('info', 'Received remote audio stream');
         audio.srcObject = e.streams[0];
       };
 
@@ -72,18 +53,8 @@ export default function VoiceAgent() {
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
       
-      dc.onopen = () => addLog('info', 'Data channel opened');
       dc.onmessage = (evt) => {
-        try {
-          const data = JSON.parse(evt.data);
-          addLog('info', `Event: ${data.type}`);
-          
-          if (data.type === 'conversation.item.input_audio_transcription.completed') {
-            addLog('user', data.transcript || 'Speech recognized');
-          }
-        } catch (e) {
-          addLog('info', `Raw event: ${evt.data.slice(0, 100)}`);
-        }
+        // Handle WebRTC events if needed
       };
 
       // Add microphone
@@ -96,7 +67,6 @@ export default function VoiceAgent() {
       });
       ms.getTracks().forEach((t) => pc.addTrack(t, ms));
       micStreamRef.current = ms;
-      addLog('info', 'Microphone access granted');
 
       // 3) Create an SDP offer for OpenAI
       const offer = await pc.createOffer({ 
@@ -123,7 +93,6 @@ export default function VoiceAgent() {
       await pc.setRemoteDescription({ type: "answer", sdp: answerSDP });
 
       setConnected(true);
-      addLog('info', 'Connected to OpenAI Realtime');
       
       toast({
         title: "Connected",
@@ -132,7 +101,6 @@ export default function VoiceAgent() {
 
     } catch (error) {
       console.error('Connection error:', error);
-      addLog('error', `Connection failed: ${error.message}`);
       toast({
         title: "Connection Failed",
         description: error.message,
@@ -156,8 +124,6 @@ export default function VoiceAgent() {
     pcRef.current = null;
     micStreamRef.current = null;
     
-    addLog('info', 'Disconnected from voice agent');
-    
     toast({
       title: "Disconnected",
       description: "Voice agent session ended.",
@@ -170,14 +136,11 @@ export default function VoiceAgent() {
         track.enabled = !micEnabled;
       });
       setMicEnabled(!micEnabled);
-      addLog('info', micEnabled ? 'Microphone muted' : 'Microphone unmuted');
     }
   };
 
   const askDocs = async (questionText: string) => {
     if (!questionText.trim()) return;
-    
-    addLog('user', `Question: ${questionText}`);
 
     try {
       // 1) Get grounded answer from vector store via backend
@@ -190,7 +153,6 @@ export default function VoiceAgent() {
       }
 
       const answer = data?.answer || 'No answer found.';
-      addLog('assistant', `Answer: ${answer}`);
 
       // 2) Tell Realtime model to SPEAK this text
       if (dcRef.current && dcRef.current.readyState === 'open') {
@@ -214,15 +176,12 @@ export default function VoiceAgent() {
         dcRef.current.send(JSON.stringify({
           type: "response.create"
         }));
-        
-        addLog('info', 'Answer sent to voice agent');
       } else {
-        addLog('error', 'Data channel not ready');
+        console.log('Data channel not ready');
       }
 
     } catch (error) {
       console.error('Ask docs error:', error);
-      addLog('error', `Failed to get answer: ${error.message}`);
       toast({
         title: "Search Failed",
         description: error.message,
