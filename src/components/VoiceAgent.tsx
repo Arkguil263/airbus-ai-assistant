@@ -322,44 +322,10 @@ export default function VoiceAgent() {
 
       {/* Controls at bottom */}
       <div className="border-t bg-background p-4 space-y-4">
-        {/* Connect/Disconnect and Mic controls */}
-        <div className="flex justify-center gap-2">
-          {!connected ? (
-            <Button 
-              onClick={connect} 
-              disabled={connecting}
-              variant="default"
-              size="icon"
-              className="h-12 w-12"
-            >
-              <Mic className="h-6 w-6" />
-            </Button>
-          ) : (
-            <>
-              <Button 
-                onClick={disconnect} 
-                variant="destructive"
-                size="icon"
-                className="h-12 w-12"
-              >
-                <Mic className="h-6 w-6" />
-              </Button>
-              <Button
-                onClick={toggleMic}
-                variant={micEnabled ? "default" : "secondary"}
-                size="icon"
-                className="h-12 w-12"
-              >
-                {micEnabled ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
-              </Button>
-            </>
-          )}
-        </div>
-
         {/* File Upload */}
         <FileUpload onAnalysisComplete={handleAnalysisComplete} />
 
-        {/* Question Input */}
+        {/* Question Input with Voice Agent Icon */}
         <div className="flex gap-2">
           <Input
             value={question}
@@ -369,19 +335,52 @@ export default function VoiceAgent() {
             disabled={!connected}
             className="flex-1"
           />
+          
+          {/* Voice Agent Connect/Disconnect Button */}
+          {!connected ? (
+            <Button 
+              onClick={connect} 
+              disabled={connecting}
+              variant="default"
+              size="icon"
+              className="h-10 w-10"
+            >
+              <Mic className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              onClick={toggleMic}
+              variant={micEnabled ? "default" : "secondary"}
+              size="icon"
+              className="h-10 w-10"
+            >
+              {micEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+            </Button>
+          )}
+
+          {/* Ask Button */}
           <Button 
             onClick={handleAskDocs}
             disabled={!connected || !question.trim()}
             size="icon"
             className="h-10 w-10"
           >
-            {!connected ? (
-              <Mic className="h-4 w-4" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
+            <Send className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Disconnect Button when connected */}
+        {connected && (
+          <div className="flex justify-center">
+            <Button 
+              onClick={disconnect} 
+              variant="destructive"
+              className="flex items-center gap-2"
+            >
+              Disconnect
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
