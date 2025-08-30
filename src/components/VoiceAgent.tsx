@@ -210,6 +210,8 @@ export default function VoiceAgent() {
     };
   }, []);
 
+  console.log('🎤 VoiceAgent component rendering - no Activity Log should be visible');
+
   return (
     <div className="h-full flex flex-col p-6 space-y-4">
       <Card>
@@ -271,9 +273,13 @@ export default function VoiceAgent() {
               Ask
             </Button>
           </div>
+
+          {/* DEBUGGING: This should confirm no Activity Log is being rendered */}
+          <div className="text-sm text-muted-foreground">
+            Debug: VoiceAgent rendered at {new Date().toLocaleTimeString()} - No Activity Log present
+          </div>
         </CardContent>
       </Card>
-
     </div>
   );
 }
