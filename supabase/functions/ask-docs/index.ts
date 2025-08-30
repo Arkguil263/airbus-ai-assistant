@@ -31,11 +31,11 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4.1-2025-04-14",
         messages: [
           {
             role: "system",
-            content: "You are an expert aircraft documentation assistant. Use the provided documents to answer questions about aircraft systems, procedures, and technical information. Always cite specific sources when available."
+            content: "You are an expert aircraft documentation assistant specializing in aviation technical manuals, procedures, and regulations. Use the provided documents to give precise, actionable answers about aircraft systems, maintenance procedures, flight operations, and safety protocols. Always cite specific document sections when available and be concise but thorough."
           },
           {
             role: "user",
@@ -64,9 +64,9 @@ serve(async (req) => {
     }
 
     const json = await resp.json();
-    console.log('Received response from OpenAI');
+    console.log('Received response from OpenAI:', json.choices?.[0]?.message?.content ? 'Success' : 'No content');
 
-    const answer = json.choices?.[0]?.message?.content || "No answer found.";
+    const answer = json.choices?.[0]?.message?.content || "I couldn't find relevant information in the documentation for your question.";
 
     return new Response(JSON.stringify({ answer }), {
       headers: { ...cors, "Content-Type": "application/json" },
