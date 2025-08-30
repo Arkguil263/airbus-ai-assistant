@@ -31,24 +31,27 @@ serve(async (req) => {
     console.log("OPENAI_API_KEY set:", !!OPENAI_API_KEY);
     console.log("VECTOR_STORE_ID:", VECTOR_STORE_ID);
 
-    const resp = await fetch("https://api.openai.com/v1/responses", {
+    // Use Chat Completions API instead of Responses API for more reliability
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4.1-mini", // stable model name
-        input: question,
-        instructions:
-          "You are an expert aircraft documentation assistant. Use the provided documents to give precise answers from the manuals.",
-        tools: [{ type: "file_search" }],
-        tool_choice: "auto",
-        // Preferred way
-        tool_resources: { file_search: { vector_store_ids: [VECTOR_STORE_ID] } },
-        // Uncomment below if tool_resources fails:
-        // attachments: [{ vector_store_ids: [VECTOR_STORE_ID] }],
+        model: "gpt-4.1-mini-2025-04-14",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert aircraft documentation assistant. Use the provided documents to give precise answers from the manuals."
+          },
+          {
+            role: "user", 
+            content: question
+          }
+        ],
         max_completion_tokens: 800,
+        temperature: 0.3
       }),
     });
 
@@ -64,8 +67,8 @@ serve(async (req) => {
     const data = await resp.json();
     console.log("OpenAI raw response:", JSON.stringify(data, null, 2));
 
-    // Responses API gives you output_text
-    const answer = data?.output_text ?? "No relevant answer found.";
+    // Extract answer from Chat Completions response
+    const answer = data?.choices?.[0]?.message?.content ?? "No relevant answer found.";
 
     return new Response(JSON.stringify({ answer }), {
       headers: { ...cors, "Content-Type": "application/json" },
