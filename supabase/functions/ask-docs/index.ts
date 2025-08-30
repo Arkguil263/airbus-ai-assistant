@@ -1,3 +1,4 @@
+// supabase/functions/ask-docs/index.ts
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
@@ -6,39 +7,30 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
-const VECTOR_STORE_ID = Deno.env.get("OPENAI_VECTOR_STORE_ID")!;
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+const VECTOR_STORE_ID = Deno.env.get("OPENAI_VECTOR_STORE_ID");
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: cors });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: cors });
+  }
 
   try {
-    console.log('=== ASK-DOCS FUNCTION CALLED ===');
-    console.log('Request method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-    
-    const body = await req.json();
-    console.log('Request body:', body);
+    const body = await req.json().catch(() => ({}));
     const { question } = body;
 
-    if (!question) {
-      console.log('ERROR: Missing question in request');
-      return new Response(JSON.stringify({ error: "Missing 'question'." }), { 
-        status: 400, 
-        headers: { ...cors, "Content-Type": "application/json" } 
+    if (!question || typeof question !== "string" || !question.trim()) {
+      return new Response(JSON.stringify({ error: "Missing 'question'." }), {
+        status: 400,
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
-    console.log('=== ENVIRONMENT CHECK ===');
-    console.log('OPENAI_API_KEY available:', !!OPENAI_API_KEY);
-    console.log('VECTOR_STORE_ID available:', !!VECTOR_STORE_ID);
-    console.log('VECTOR_STORE_ID value:', VECTOR_STORE_ID);
+    console.log("=== ASK-DOCS CALLED ===");
+    console.log("Question:", question);
+    console.log("OPENAI_API_KEY set:", !!OPENAI_API_KEY);
+    console.log("VECTOR_STORE_ID:", VECTOR_STORE_ID);
 
-    console.log('=== PROCESSING QUESTION ===');
-    console.log('Question:', question);
-
-    console.log('=== CALLING OPENAI API ===');
-    // Try the Responses API instead of Chat Completions for file search
     const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -46,46 +38,43 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-5-2025-08-07",
+        model: "gpt-4.1-mini", // stable model name
         input: question,
-        instructions: "You are an expert aircraft documentation assistant specializing in aviation technical manuals, procedures, and regulations. Use the provided documents to give precise, actionable answers about aircraft systems, maintenance procedures, flight operations, and safety protocols. Always cite specific document sections when available and be concise but thorough.",
+        instructions:
+          "You are an expert aircraft documentation assistant. Use the provided documents to give precise answers from the manuals.",
         tools: [{ type: "file_search" }],
         tool_choice: "auto",
-        tool_resources: {
-          file_search: {
-            vector_store_ids: [VECTOR_STORE_ID]
-          }
-        },
-        max_completion_tokens: 1000
+        // Preferred way
+        tool_resources: { file_search: { vector_store_ids: [VECTOR_STORE_ID] } },
+        // Uncomment below if tool_resources fails:
+        // attachments: [{ vector_store_ids: [VECTOR_STORE_ID] }],
+        max_completion_tokens: 800,
       }),
     });
 
-    console.log('OpenAI response status:', resp.status);
-    console.log('OpenAI response headers:', Object.fromEntries(resp.headers.entries()));
-
     if (!resp.ok) {
-      const err = await resp.text();
-      console.error('OpenAI API error:', err);
-      return new Response(JSON.stringify({ error: err }), { 
-        status: 500, 
-        headers: { ...cors, "Content-Type": "application/json" } 
+      const errText = await resp.text();
+      console.error("OpenAI API error:", errText);
+      return new Response(JSON.stringify({ error: errText }), {
+        status: 500,
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
-    const json = await resp.json();
-    console.log('Received response from OpenAI:', JSON.stringify(json, null, 2));
+    const data = await resp.json();
+    console.log("OpenAI raw response:", JSON.stringify(data, null, 2));
 
-    // Handle Responses API format
-    const answer = json?.output_text || json?.choices?.[0]?.message?.content || "I couldn't find relevant information in the documentation for your question.";
+    // Responses API gives you output_text
+    const answer = data?.output_text ?? "No relevant answer found.";
 
     return new Response(JSON.stringify({ answer }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error('Error in ask-docs:', e);
-    return new Response(JSON.stringify({ error: String(e) }), { 
-      status: 500, 
-      headers: { ...cors, "Content-Type": "application/json" } 
+    console.error("ask-docs error:", e);
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 500,
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 });
