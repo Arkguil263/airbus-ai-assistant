@@ -180,14 +180,14 @@ const Index = () => {
         {/* Main content area with tabs */}
         <div className="flex-1 flex flex-col">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 mx-4 mt-4 mb-4 shrink-0">
-              <TabsTrigger value="A320">A320</TabsTrigger>
-              <TabsTrigger value="A330">A330</TabsTrigger>
-              <TabsTrigger value="A350">A350</TabsTrigger>
-              <TabsTrigger value="Voice">Voice</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 mx-2 sm:mx-4 mt-4 mb-4 shrink-0 min-w-0">
+              <TabsTrigger value="A320" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A320</TabsTrigger>
+              <TabsTrigger value="A330" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A330</TabsTrigger>
+              <TabsTrigger value="A350" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A350</TabsTrigger>
+              <TabsTrigger value="Voice" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">Voice</TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 mx-4 mb-4">
+            <div className="flex-1 mx-2 sm:mx-4 mb-4">
               <TabsContent value="A320" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} aircraftModel="A320" />
