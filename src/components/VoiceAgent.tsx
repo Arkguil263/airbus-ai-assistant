@@ -11,6 +11,7 @@ export default function VoiceAgent() {
   const [micEnabled, setMicEnabled] = useState(true);
   const [question, setQuestion] = useState("");
   const [connecting, setConnecting] = useState(false);
+  const [testing, setTesting] = useState(false);
   const { toast } = useToast();
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -197,6 +198,64 @@ export default function VoiceAgent() {
     }
   };
 
+  const testConnections = async () => {
+    setTesting(true);
+    let realtimeOk = false;
+    let vectorStoreOk = false;
+
+    try {
+      // Test 1: Realtime session endpoint
+      console.log('Testing realtime-session endpoint...');
+      const { data: realtimeData, error: realtimeError } = await supabase.functions.invoke('realtime-session', {
+        body: { 
+          instructions: "Test connection for voice agent" 
+        }
+      });
+
+      if (realtimeError || !realtimeData?.client_secret) {
+        console.error('Realtime test failed:', realtimeError);
+      } else {
+        console.log('Realtime test passed:', realtimeData);
+        realtimeOk = true;
+      }
+
+      // Test 2: Vector store endpoint
+      console.log('Testing ask-docs endpoint...');
+      const { data: docsData, error: docsError } = await supabase.functions.invoke('ask-docs', {
+        body: { question: "Test connection to vector store" }
+      });
+
+      if (docsError || !docsData?.answer) {
+        console.error('Vector store test failed:', docsError);
+      } else {
+        console.log('Vector store test passed:', docsData);
+        vectorStoreOk = true;
+      }
+
+      // Show results
+      const results = [
+        `Realtime API: ${realtimeOk ? '✅ Connected' : '❌ Failed'}`,
+        `Vector Store: ${vectorStoreOk ? '✅ Connected' : '❌ Failed'}`
+      ].join('\n');
+
+      toast({
+        title: "API Connection Test",
+        description: results,
+        variant: realtimeOk && vectorStoreOk ? "default" : "destructive",
+      });
+
+    } catch (error) {
+      console.error('Test error:', error);
+      toast({
+        title: "Test Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -253,6 +312,15 @@ export default function VoiceAgent() {
                 {micEnabled ? 'Mute' : 'Unmute'}
               </Button>
             )}
+
+            <Button
+              onClick={testConnections}
+              disabled={testing}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              {testing ? 'Testing...' : 'Test API'}
+            </Button>
           </div>
 
           <div className="flex gap-2">
