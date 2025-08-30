@@ -43,7 +43,7 @@ serve(async (req) => {
             vector_store_ids: [VECTOR_STORE_ID]
           }
         },
-        max_completion_tokens: 1000
+        max_output_tokens: 1000
       }),
     });
 
