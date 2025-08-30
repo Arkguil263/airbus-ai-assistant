@@ -1,0 +1,115 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Upload, FileText, CheckCircle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+interface FileUploadProps {
+  onAnalysisComplete: (analysis: string) => void;
+}
+
+export default function FileUpload({ onAnalysisComplete }: FileUploadProps) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    
+    try {
+      const filePromises = Array.from(files).map(async (file) => {
+        // Convert file to base64
+        const fileBuffer = await file.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+        
+        return {
+          name: file.name,
+          content: base64,
+          type: file.type
+        };
+      });
+
+      const fileData = await Promise.all(filePromises);
+
+      // Upload files to OpenAI and get analysis
+      const { data, error } = await supabase.functions.invoke('analyze-flight-files', {
+        body: { 
+          files: fileData
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const analysis = data?.analysis || 'No analysis available';
+      const fileNames = fileData.map(f => f.name);
+      
+      setUploadedFiles(prev => [...prev, ...fileNames]);
+      onAnalysisComplete(analysis);
+
+      toast({
+        title: "Analysis Complete",
+        description: `${fileData.length} file(s) analyzed successfully`,
+      });
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Flight Plan Analysis
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Input
+            type="file"
+            multiple
+            accept=".pdf,.txt,.doc,.docx,.json,.xml"
+            onChange={handleFileUpload}
+            disabled={uploading}
+            className="flex-1"
+          />
+          <Button disabled={uploading} className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            {uploading ? 'Analyzing...' : 'Upload'}
+          </Button>
+        </div>
+        
+        <div className="text-sm text-muted-foreground">
+          Upload flight plans, weather reports, and NOTAMs for AI analysis
+        </div>
+
+        {uploadedFiles.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Analyzed Files:</div>
+            {uploadedFiles.map((filename, index) => (
+              <div key={index} className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                {filename}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

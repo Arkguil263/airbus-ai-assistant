@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Mic, MicOff, Phone, PhoneOff, Send } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import FileUpload from "./FileUpload";
 
 export default function VoiceAgent() {
   const [connected, setConnected] = useState(false);
@@ -12,6 +13,7 @@ export default function VoiceAgent() {
   const [question, setQuestion] = useState("");
   const [connecting, setConnecting] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [flightAnalysis, setFlightAnalysis] = useState<string>("");
   const { toast } = useToast();
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -25,9 +27,13 @@ export default function VoiceAgent() {
 
     try {
       // 1) Get ephemeral client_secret from Supabase
+      const instructions = flightAnalysis 
+        ? `You are a helpful voice agent for aircraft documentation. You have access to a detailed flight analysis: ${flightAnalysis}. Use this analysis to answer questions about the flight plan, weather, and NOTAMs. Keep replies concise and friendly.`
+        : "You are a helpful voice agent for aircraft documentation. Keep replies concise and friendly.";
+        
       const { data, error } = await supabase.functions.invoke('realtime-session', {
         body: { 
-          instructions: "You are a helpful voice agent for aircraft documentation. Keep replies concise and friendly." 
+          instructions 
         }
       });
 
@@ -263,6 +269,14 @@ export default function VoiceAgent() {
     }
   };
 
+  const handleAnalysisComplete = (analysis: string) => {
+    setFlightAnalysis(analysis);
+    toast({
+      title: "Flight Analysis Ready",
+      description: "Voice agent now has access to your flight data",
+    });
+  };
+
   useEffect(() => {
     return () => {
       disconnect();
@@ -273,6 +287,8 @@ export default function VoiceAgent() {
 
   return (
     <div className="h-full flex flex-col p-6 space-y-4">
+      <FileUpload onAnalysisComplete={handleAnalysisComplete} />
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
