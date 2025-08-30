@@ -32,7 +32,7 @@ serve(async (req: Request) => {
       body: JSON.stringify({
         model: "gpt-4o-realtime-preview-2024-12-17",
         voice: "alloy",
-        instructions: "You are a concise, pilot-friendly voice assistant for Airbus aircraft. If you need document details about aircraft systems, procedures, or technical information, call the searchDocs tool.",
+        instructions: "You are a concise, pilot-friendly voice assistant for Airbus aircraft. When users ask about aircraft systems, procedures, or technical information, use the searchDocs function to find relevant documentation before responding. Keep responses clear and aviation-focused.",
         tools: [
           {
             type: "function",

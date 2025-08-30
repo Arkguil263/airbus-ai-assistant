@@ -9,8 +9,8 @@ export interface RealtimeSession {
 
 export interface RealtimeOptions {
   model?: string;
+  aircraftModel?: string;
   onTranscript?: (text: string) => void;
-  onToolCall?: (toolCall: any) => Promise<any>;
   onConnected?: () => void;
   onDisconnected?: () => void;
   onError?: (error: string) => void;
@@ -82,7 +82,7 @@ export class RealtimeVoiceClient {
             this.transcriptBuffer = '';
           }
 
-          // Handle tool calls
+          // Handle tool calls for document search
           if (message.type === 'response.function_call_arguments.done') {
             const { call_id, arguments: args } = message;
             const parsedArgs = JSON.parse(args || '{}');
@@ -90,16 +90,15 @@ export class RealtimeVoiceClient {
             console.log('Tool call received:', { call_id, args: parsedArgs });
 
             try {
-              // Call the existing chat-assistant function which handles document search
+              // Get the current aircraft model from options or default to A320
+              const aircraftModel = options.aircraftModel || 'A320';
+              
+              // Use the chat-assistant function to search documents via vector store
               const { data: searchResult, error: searchError } = await supabase.functions.invoke('chat-assistant', {
                 body: {
-                  messages: [
-                    {
-                      role: 'user',
-                      content: parsedArgs.query || 'Search documents'
-                    }
-                  ],
-                  searchOnly: true // Flag to indicate we only want search results
+                  message: parsedArgs.query || 'Search documents',
+                  conversationId: 'voice-search-temp',
+                  aircraftModel: aircraftModel
                 }
               });
 
@@ -113,19 +112,26 @@ export class RealtimeVoiceClient {
                 item: {
                   type: 'function_call_output',
                   call_id,
-                  output: JSON.stringify(searchResult)
+                  output: JSON.stringify({
+                    results: searchResult?.response || 'No relevant documents found.',
+                    query: parsedArgs.query,
+                    aircraftModel
+                  })
                 }
               }));
 
-              console.log('Tool result sent back to OpenAI');
+              console.log('Document search result sent back to OpenAI');
             } catch (error) {
-              console.error('Tool call error:', error);
+              console.error('Document search error:', error);
               dc.send(JSON.stringify({
                 type: 'conversation.item.create',
                 item: {
                   type: 'function_call_output',
                   call_id,
-                  output: JSON.stringify({ error: String(error) })
+                  output: JSON.stringify({ 
+                    error: String(error),
+                    message: 'Unable to search documents at this time'
+                  })
                 }
               }));
             }
@@ -139,11 +145,12 @@ export class RealtimeVoiceClient {
         console.log('Data channel opened');
         options.onConnected?.();
 
-        // Send session update with specific instructions
+        // Send session update with aircraft-specific instructions
+        const aircraftModel = options.aircraftModel || 'A320';
         dc.send(JSON.stringify({
           type: 'session.update',
           session: {
-            instructions: 'You are a concise, pilot-friendly voice assistant for Airbus aircraft. When users ask about aircraft systems, procedures, or technical information, use the searchDocs tool to find relevant documentation before responding. Keep responses clear and aviation-focused.',
+            instructions: `You are a concise, pilot-friendly voice assistant for ${aircraftModel} aircraft. When users ask about aircraft systems, procedures, or technical information, use the searchDocs function to find relevant documentation before responding. Keep responses clear and aviation-focused.`,
             voice: 'alloy',
             input_audio_format: 'pcm16',
             output_audio_format: 'pcm16',
