@@ -34,3 +34,9 @@ port = 54329
 
 [functions.chat-assistant]
 verify_jwt = true
+
+[functions.ask-docs]
+verify_jwt = false
+
+[functions.realtime-session]
+verify_jwt = false
