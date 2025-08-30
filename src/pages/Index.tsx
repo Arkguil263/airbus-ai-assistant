@@ -13,7 +13,6 @@ import EnhancedMessageInput from '@/components/EnhancedMessageInput';
 import VoiceAgent from '@/components/VoiceAgent';
 
 
-
 const Index = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();

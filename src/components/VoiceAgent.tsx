@@ -36,7 +36,6 @@ export default function VoiceAgent({ aircraftModel = 'A320', onTranscript }: Voi
     setIsConnecting(true);
     try {
       await clientRef.current.connect({
-        aircraftModel,
         onTranscript: (text) => {
           setTranscript(text);
           onTranscript?.(text);
@@ -46,7 +45,7 @@ export default function VoiceAgent({ aircraftModel = 'A320', onTranscript }: Voi
           setIsConnecting(false);
           toast({
             title: "Voice Agent Connected",
-            description: `You can now speak with the ${aircraftModel} AI assistant`,
+            description: "You can now speak with the AI assistant",
           });
         },
         onDisconnected: () => {
@@ -97,10 +96,10 @@ export default function VoiceAgent({ aircraftModel = 'A320', onTranscript }: Voi
   };
 
   return (
-    <Card className="p-6 bg-card border border-border">
+    <Card className="p-6 bg-white border border-gray-200">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="text-lg font-semibold text-gray-900">
             Voice Agent - {aircraftModel}
           </h3>
           <div className="flex items-center gap-2">
@@ -145,28 +144,28 @@ export default function VoiceAgent({ aircraftModel = 'A320', onTranscript }: Voi
               Connected - Speak naturally to the AI assistant
             </div>
             
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
               <Mic className="h-4 w-4" />
-              Microphone active - AI can hear you and search documents
+              Microphone active - AI can hear you
             </div>
           </div>
         )}
 
         {transcript && (
           <div className="mt-4">
-            <div className="text-sm font-medium text-foreground mb-2">Live Transcript:</div>
-            <div className="p-3 bg-muted rounded-lg border text-sm">
+            <div className="text-sm font-medium text-gray-700 mb-2">Live Transcript:</div>
+            <div className="p-3 bg-gray-50 rounded-lg border text-sm">
               {transcript}
             </div>
           </div>
         )}
 
         {!isConnected && !isConnecting && (
-          <div className="text-sm text-muted-foreground space-y-2">
+          <div className="text-sm text-gray-600 space-y-2">
             <p>Click "Connect Voice" to start a voice conversation with the AI assistant.</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-500">
               The assistant can help with {aircraftModel} systems, procedures, and documentation.
-              It will search the document vector store when needed for accurate technical information.
+              It will search relevant documents when needed.
             </p>
           </div>
         )}
