@@ -23,15 +23,20 @@ export default function FileUpload({ onAnalysisComplete }: FileUploadProps) {
     
     try {
       const filePromises = Array.from(files).map(async (file) => {
-        // Convert file to base64
-        const fileBuffer = await file.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
-        
-        return {
-          name: file.name,
-          content: base64,
-          type: file.type
-        };
+        // Convert file to base64 using FileReader to avoid stack overflow
+        return new Promise<{name: string, content: string, type: string}>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1]; // Remove data:mime;base64, prefix
+            resolve({
+              name: file.name,
+              content: base64,
+              type: file.type
+            });
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
       });
 
       const fileData = await Promise.all(filePromises);
