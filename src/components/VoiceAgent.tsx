@@ -315,30 +315,6 @@ export default function VoiceAgent() {
         </CardContent>
       </Card>
 
-      <Card className="flex-1">
-        <CardHeader>
-          <CardTitle>Activity Log</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-64">
-            <div className="space-y-2">
-              {logs.map((log, index) => (
-                <div key={index} className="text-sm">
-                  <span className="text-muted-foreground">[{log.timestamp}]</span>
-                  <span className={`ml-2 ${
-                    log.type === 'error' ? 'text-destructive' :
-                    log.type === 'user' ? 'text-primary' :
-                    log.type === 'assistant' ? 'text-secondary' :
-                    'text-muted-foreground'
-                  }`}>
-                    {log.message}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
     </div>
   );
 }
