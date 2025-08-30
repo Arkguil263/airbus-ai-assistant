@@ -6,7 +6,7 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
+const OPENAI_API_KEY = Deno.env.get("OPENAI_REALTIME_API_KEY")!;
 const REALTIME_MODEL = Deno.env.get("OPENAI_REALTIME_MODEL") ?? "gpt-4o-realtime-preview-2024-12-17";
 const REALTIME_VOICE = Deno.env.get("OPENAI_REALTIME_VOICE") ?? "alloy";
 
