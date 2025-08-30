@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Mic, MicOff, Phone, PhoneOff, Send } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Mic, MicOff, Send } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import FileUpload from "./FileUpload";
@@ -12,8 +13,13 @@ export default function VoiceAgent() {
   const [micEnabled, setMicEnabled] = useState(true);
   const [question, setQuestion] = useState("");
   const [connecting, setConnecting] = useState(false);
-  const [testing, setTesting] = useState(false);
   const [flightAnalysis, setFlightAnalysis] = useState<string>("");
+  const [messages, setMessages] = useState<Array<{
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: Date;
+  }>>([]);
   const { toast } = useToast();
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -61,7 +67,46 @@ export default function VoiceAgent() {
       dcRef.current = dc;
       
       dc.onmessage = (evt) => {
-        // Handle WebRTC events if needed
+        try {
+          const event = JSON.parse(evt.data);
+          
+          // Handle different event types
+          if (event.type === 'response.audio_transcript.delta') {
+            // Handle real-time transcript
+            const newMessage = {
+              id: `assistant-${Date.now()}`,
+              role: 'assistant' as const,
+              content: event.delta || '',
+              timestamp: new Date(),
+            };
+            setMessages(prev => {
+              const lastMessage = prev[prev.length - 1];
+              if (lastMessage && lastMessage.role === 'assistant' && 
+                  Date.now() - lastMessage.timestamp.getTime() < 1000) {
+                // Update the last assistant message
+                return [...prev.slice(0, -1), {
+                  ...lastMessage,
+                  content: lastMessage.content + event.delta,
+                  timestamp: new Date()
+                }];
+              } else {
+                // Add new message
+                return [...prev, newMessage];
+              }
+            });
+          } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
+            // Handle user speech transcription
+            const userMessage = {
+              id: `user-${Date.now()}`,
+              role: 'user' as const,
+              content: event.transcript || '',
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, userMessage]);
+          }
+        } catch (error) {
+          console.error('Error parsing WebRTC event:', error);
+        }
       };
 
       // Add microphone
@@ -197,68 +242,20 @@ export default function VoiceAgent() {
     }
   };
 
+
   const handleAskDocs = () => {
     if (question.trim()) {
+      // Add user message to conversation
+      const userMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user' as const,
+        content: question,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, userMessage]);
+      
       askDocs(question);
       setQuestion("");
-    }
-  };
-
-  const testConnections = async () => {
-    setTesting(true);
-    let realtimeOk = false;
-    let vectorStoreOk = false;
-
-    try {
-      // Test 1: Realtime session endpoint
-      console.log('Testing realtime-session endpoint...');
-      const { data: realtimeData, error: realtimeError } = await supabase.functions.invoke('realtime-session', {
-        body: { 
-          instructions: "Test connection for voice agent" 
-        }
-      });
-
-      if (realtimeError || !realtimeData?.client_secret) {
-        console.error('Realtime test failed:', realtimeError);
-      } else {
-        console.log('Realtime test passed:', realtimeData);
-        realtimeOk = true;
-      }
-
-      // Test 2: Vector store endpoint
-      console.log('Testing ask-docs endpoint...');
-      const { data: docsData, error: docsError } = await supabase.functions.invoke('ask-docs', {
-        body: { question: "Test connection to vector store" }
-      });
-
-      if (docsError || !docsData?.answer) {
-        console.error('Vector store test failed:', docsError);
-      } else {
-        console.log('Vector store test passed:', docsData);
-        vectorStoreOk = true;
-      }
-
-      // Show results
-      const results = [
-        `Realtime API: ${realtimeOk ? '✅ Connected' : '❌ Failed'}`,
-        `Vector Store: ${vectorStoreOk ? '✅ Connected' : '❌ Failed'}`
-      ].join('\n');
-
-      toast({
-        title: "API Connection Test",
-        description: results,
-        variant: realtimeOk && vectorStoreOk ? "default" : "destructive",
-      });
-
-    } catch (error) {
-      console.error('Test error:', error);
-      toast({
-        title: "Test Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setTesting(false);
     }
   };
 
@@ -283,87 +280,109 @@ export default function VoiceAgent() {
     };
   }, []);
 
-  console.log('🎤 VoiceAgent component rendering - no Activity Log should be visible');
-
   return (
-    <div className="h-full flex flex-col p-6 space-y-4">
-      <FileUpload onAnalysisComplete={handleAnalysisComplete} />
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5" />
-            Voice Agent
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            {!connected ? (
-              <Button 
-                onClick={connect} 
-                disabled={connecting}
-                className="flex items-center gap-2"
-              >
-                <Phone className="h-4 w-4" />
-                {connecting ? 'Connecting...' : 'Connect'}
-              </Button>
+    <div className="h-full flex flex-col">
+      {/* Conversation Display */}
+      <div className="flex-1 flex flex-col">
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4">
+            {messages.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <Mic className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Start a conversation with the voice agent</p>
+                <p className="text-sm">Connect and speak, or type your questions below</p>
+              </div>
             ) : (
+              messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground'
+                    }`}
+                  >
+                    <div className="text-sm font-medium mb-1">
+                      {message.role === 'user' ? 'You' : 'Assistant'}
+                    </div>
+                    <div className="text-sm">{message.content}</div>
+                    <div className="text-xs opacity-70 mt-1">
+                      {message.timestamp.toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Controls at bottom */}
+      <div className="border-t bg-background p-4 space-y-4">
+        {/* Connect/Disconnect and Mic controls */}
+        <div className="flex justify-center gap-2">
+          {!connected ? (
+            <Button 
+              onClick={connect} 
+              disabled={connecting}
+              variant="default"
+              size="icon"
+              className="h-12 w-12"
+            >
+              <Mic className="h-6 w-6" />
+            </Button>
+          ) : (
+            <>
               <Button 
                 onClick={disconnect} 
                 variant="destructive"
-                className="flex items-center gap-2"
+                size="icon"
+                className="h-12 w-12"
               >
-                <PhoneOff className="h-4 w-4" />
-                Disconnect
+                <Mic className="h-6 w-6" />
               </Button>
-            )}
-            
-            {connected && (
               <Button
                 onClick={toggleMic}
                 variant={micEnabled ? "default" : "secondary"}
-                className="flex items-center gap-2"
+                size="icon"
+                className="h-12 w-12"
               >
-                {micEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-                {micEnabled ? 'Mute' : 'Unmute'}
+                {micEnabled ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
               </Button>
-            )}
+            </>
+          )}
+        </div>
 
-            <Button
-              onClick={testConnections}
-              disabled={testing}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              {testing ? 'Testing...' : 'Test API'}
-            </Button>
-          </div>
+        {/* File Upload */}
+        <FileUpload onAnalysisComplete={handleAnalysisComplete} />
 
-          <div className="flex gap-2">
-            <Input
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask about aircraft documentation..."
-              disabled={!connected}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleAskDocs}
-              disabled={!connected || !question.trim()}
-              className="flex items-center gap-2"
-            >
+        {/* Question Input */}
+        <div className="flex gap-2">
+          <Input
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Ask about aircraft documentation..."
+            disabled={!connected}
+            className="flex-1"
+          />
+          <Button 
+            onClick={handleAskDocs}
+            disabled={!connected || !question.trim()}
+            size="icon"
+            className="h-10 w-10"
+          >
+            {!connected ? (
+              <Mic className="h-4 w-4" />
+            ) : (
               <Send className="h-4 w-4" />
-              Ask
-            </Button>
-          </div>
-
-          {/* DEBUGGING: This should confirm no Activity Log is being rendered */}
-          <div className="text-sm text-muted-foreground">
-            Debug: VoiceAgent rendered at {new Date().toLocaleTimeString()} - No Activity Log present
-          </div>
-        </CardContent>
-      </Card>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
