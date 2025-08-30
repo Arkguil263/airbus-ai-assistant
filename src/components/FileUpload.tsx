@@ -77,13 +77,7 @@ export default function FileUpload({ onAnalysisComplete }: FileUploadProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Flight Plan Analysis
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-6">
         <div className="flex items-center gap-2">
           <Input
             type="file"
