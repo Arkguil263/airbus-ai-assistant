@@ -23,8 +23,10 @@ serve(async (req) => {
     }
 
     console.log('Searching docs for question:', question);
+    console.log('Using vector store ID:', VECTOR_STORE_ID);
 
-    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    // Try the Responses API instead of Chat Completions for file search
+    const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${OPENAI_API_KEY}`,
@@ -32,16 +34,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4.1-2025-04-14",
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert aircraft documentation assistant specializing in aviation technical manuals, procedures, and regulations. Use the provided documents to give precise, actionable answers about aircraft systems, maintenance procedures, flight operations, and safety protocols. Always cite specific document sections when available and be concise but thorough."
-          },
-          {
-            role: "user",
-            content: question
-          }
-        ],
+        input: question,
+        instructions: "You are an expert aircraft documentation assistant specializing in aviation technical manuals, procedures, and regulations. Use the provided documents to give precise, actionable answers about aircraft systems, maintenance procedures, flight operations, and safety protocols. Always cite specific document sections when available and be concise but thorough.",
         tools: [{ type: "file_search" }],
         tool_choice: "auto",
         tool_resources: {
@@ -49,8 +43,7 @@ serve(async (req) => {
             vector_store_ids: [VECTOR_STORE_ID]
           }
         },
-        max_tokens: 1000,
-        temperature: 0.1
+        max_completion_tokens: 1000
       }),
     });
 
@@ -64,9 +57,10 @@ serve(async (req) => {
     }
 
     const json = await resp.json();
-    console.log('Received response from OpenAI:', json.choices?.[0]?.message?.content ? 'Success' : 'No content');
+    console.log('Received response from OpenAI:', JSON.stringify(json, null, 2));
 
-    const answer = json.choices?.[0]?.message?.content || "I couldn't find relevant information in the documentation for your question.";
+    // Handle Responses API format
+    const answer = json?.output_text || json?.choices?.[0]?.message?.content || "I couldn't find relevant information in the documentation for your question.";
 
     return new Response(JSON.stringify({ answer }), {
       headers: { ...cors, "Content-Type": "application/json" },
