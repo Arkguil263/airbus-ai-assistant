@@ -93,9 +93,6 @@ export default function FileUpload({ onAnalysisComplete }: FileUploadProps) {
           </Button>
         </div>
         
-        <div className="text-sm text-muted-foreground">
-          Upload flight plans, weather reports, and NOTAMs for AI analysis
-        </div>
 
         {uploadedFiles.length > 0 && (
           <div className="space-y-2">
