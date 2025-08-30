@@ -13,18 +13,31 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
 
   try {
-    const { question } = await req.json();
+    console.log('=== ASK-DOCS FUNCTION CALLED ===');
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    
+    const body = await req.json();
+    console.log('Request body:', body);
+    const { question } = body;
 
     if (!question) {
+      console.log('ERROR: Missing question in request');
       return new Response(JSON.stringify({ error: "Missing 'question'." }), { 
         status: 400, 
         headers: { ...cors, "Content-Type": "application/json" } 
       });
     }
 
-    console.log('Searching docs for question:', question);
-    console.log('Using vector store ID:', VECTOR_STORE_ID);
+    console.log('=== ENVIRONMENT CHECK ===');
+    console.log('OPENAI_API_KEY available:', !!OPENAI_API_KEY);
+    console.log('VECTOR_STORE_ID available:', !!VECTOR_STORE_ID);
+    console.log('VECTOR_STORE_ID value:', VECTOR_STORE_ID);
 
+    console.log('=== PROCESSING QUESTION ===');
+    console.log('Question:', question);
+
+    console.log('=== CALLING OPENAI API ===');
     // Try the Responses API instead of Chat Completions for file search
     const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -33,7 +46,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4.1-2025-04-14",
+        model: "gpt-5-2025-08-07",
         input: question,
         instructions: "You are an expert aircraft documentation assistant specializing in aviation technical manuals, procedures, and regulations. Use the provided documents to give precise, actionable answers about aircraft systems, maintenance procedures, flight operations, and safety protocols. Always cite specific document sections when available and be concise but thorough.",
         tools: [{ type: "file_search" }],
@@ -43,9 +56,12 @@ serve(async (req) => {
             vector_store_ids: [VECTOR_STORE_ID]
           }
         },
-        max_output_tokens: 1000
+        max_completion_tokens: 1000
       }),
     });
+
+    console.log('OpenAI response status:', resp.status);
+    console.log('OpenAI response headers:', Object.fromEntries(resp.headers.entries()));
 
     if (!resp.ok) {
       const err = await resp.text();
