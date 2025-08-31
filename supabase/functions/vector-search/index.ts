@@ -59,14 +59,29 @@ serve(async (req) => {
 
     // Get authorization header
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+    
     if (!authHeader) {
+      console.error('No authorization header found');
       throw new Error('No authorization header');
     }
 
+    // Extract the JWT token (remove 'Bearer ' prefix)
+    const jwt = authHeader.replace('Bearer ', '');
+    console.log('JWT token extracted, length:', jwt.length);
+
     // Verify the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (authError || !user) {
-      throw new Error('Unauthorized');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
+    console.log('Auth verification result:', { user: !!user, error: !!authError });
+    
+    if (authError) {
+      console.error('Auth error details:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
+    if (!user) {
+      console.error('No user found after auth verification');
+      throw new Error('User not found');
     }
 
     console.log('User authenticated:', user.email);
