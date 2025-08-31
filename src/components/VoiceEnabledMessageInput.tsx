@@ -273,6 +273,42 @@ const VoiceEnabledMessageInput = ({
 
   return (
     <div className="space-y-4">
+      {/* Realtime Voice Assistant Button */}
+      <div className="px-4">
+        {!voiceConnected ? (
+          <Button 
+            type="button"
+            onClick={connectVoice} 
+            disabled={connecting || disabled}
+            variant="outline"
+            className="w-full transition-all duration-200 hover:scale-[1.02] disabled:scale-100"
+          >
+            <Mic className="h-4 w-4 mr-2" />
+            {connecting ? "Connecting..." : "Realtime Voice Assistant"}
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={toggleMic}
+              variant={micEnabled ? "default" : "secondary"}
+              className="flex-1 transition-all duration-200 hover:scale-[1.02]"
+            >
+              {micEnabled ? <Mic className="h-4 w-4 mr-2" /> : <MicOff className="h-4 w-4 mr-2" />}
+              {micEnabled ? "Voice Active" : "Voice Muted"}
+            </Button>
+            <Button
+              type="button"
+              onClick={disconnectVoice}
+              variant="destructive"
+              className="transition-all duration-200 hover:scale-[1.02]"
+            >
+              Disconnect
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* Message Input Form */}
       <form onSubmit={handleSubmit} className="flex gap-3 p-4 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex-1 relative">
@@ -288,32 +324,6 @@ const VoiceEnabledMessageInput = ({
           />
         </div>
         
-        {/* Voice Button */}
-        {!voiceConnected ? (
-          <Button 
-            type="button"
-            onClick={connectVoice} 
-            disabled={connecting || disabled}
-            variant="outline"
-            size="icon"
-            className="h-[44px] w-[44px] shrink-0 rounded-lg transition-all duration-200 hover:scale-105 disabled:scale-100"
-            title={`Enable voice chat for ${aircraftModel}`}
-          >
-            <Mic className="h-4 w-4" />
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={toggleMic}
-            variant={micEnabled ? "default" : "secondary"}
-            size="icon"
-            className="h-[44px] w-[44px] shrink-0 rounded-lg transition-all duration-200 hover:scale-105"
-            title={micEnabled ? "Mute microphone" : "Unmute microphone"}
-          >
-            {micEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-          </Button>
-        )}
-
         {/* Send Button */}
         <Button 
           type="submit" 
@@ -323,19 +333,6 @@ const VoiceEnabledMessageInput = ({
         >
           <Send className="h-4 w-4" />
         </Button>
-
-        {/* Disconnect Voice Button (when connected) */}
-        {voiceConnected && (
-          <Button
-            type="button"
-            onClick={disconnectVoice}
-            variant="destructive"
-            size="sm"
-            className="h-[44px] px-3 shrink-0 rounded-lg transition-all duration-200"
-          >
-            Disconnect Voice
-          </Button>
-        )}
       </form>
     </div>
   );
