@@ -13,6 +13,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  
+  console.log('=== VECTOR SEARCH FUNCTION START ===');
   try {
     const { question, aircraftModel = 'A320' } = await req.json();
     console.log('Vector search request:', { question, aircraftModel });
@@ -220,9 +222,20 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in vector search function:', error);
+    console.error('=== ERROR IN VECTOR SEARCH ===');
+    console.error('Error type:', typeof error);
+    console.error('Error name:', error?.name);
+    console.error('Error message:', error?.message);
+    console.error('Error stack:', error?.stack);
+    console.error('Full error object:', error);
+    console.error('=== END ERROR DEBUG ===');
+    
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: error.message || 'Unknown error occurred',
+      details: {
+        name: error?.name,
+        stack: error?.stack?.substring(0, 500) // Truncate stack trace
+      }
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
