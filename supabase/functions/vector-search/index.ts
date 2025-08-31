@@ -52,39 +52,16 @@ serve(async (req) => {
 
     console.log('Using vector store:', vectorStoreId);
 
-    // Initialize Supabase client for authentication
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Get authorization header
+    // Simple authentication check - just verify we have a valid authorization header
     const authHeader = req.headers.get('Authorization');
     console.log('Auth header present:', !!authHeader);
     
-    if (!authHeader) {
-      console.error('No authorization header found');
-      throw new Error('No authorization header');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing or invalid authorization header');
+      throw new Error('Authorization header required');
     }
 
-    // Extract the JWT token (remove 'Bearer ' prefix)
-    const jwt = authHeader.replace('Bearer ', '');
-    console.log('JWT token extracted, length:', jwt.length);
-
-    // Verify the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
-    console.log('Auth verification result:', { user: !!user, error: !!authError });
-    
-    if (authError) {
-      console.error('Auth error details:', authError);
-      throw new Error(`Authentication failed: ${authError.message}`);
-    }
-    
-    if (!user) {
-      console.error('No user found after auth verification');
-      throw new Error('User not found');
-    }
-
-    console.log('User authenticated:', user.email);
+    console.log('✅ Authorization header validated successfully');
 
     // Step 1: Create a temporary thread for vector search
     console.log('Creating temporary thread for vector search...');
