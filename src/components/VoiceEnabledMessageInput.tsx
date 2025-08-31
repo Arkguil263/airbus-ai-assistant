@@ -87,11 +87,11 @@ const VoiceEnabledMessageInput = ({
         body: { instructions }
       });
 
-      if (error || !data?.client_secret) {
+      if (error || !data?.client_secret?.value) {
         throw new Error(error?.message || 'Failed to establish voice connection');
       }
 
-      const clientSecret = data.client_secret;
+      const clientSecret = data.client_secret.value;
 
       // Set up WebRTC
       const pc = new RTCPeerConnection();
