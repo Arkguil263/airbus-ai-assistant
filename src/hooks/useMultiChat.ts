@@ -214,19 +214,32 @@ export const useMultiChat = () => {
       if (aircraftModel === 'A320') {
         console.log('📡 Using vector search for A320...');
         
-        // Get the current session for authorization
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) {
-          throw new Error('No active session found. Please log in again.');
+        // Get the current session and refresh if needed
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log('Session check:', { hasSession: !!session, sessionError });
+        
+        if (sessionError || !session?.access_token) {
+          console.log('🔄 Attempting to refresh session...');
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError || !refreshData.session?.access_token) {
+            console.error('❌ Session refresh failed:', refreshError);
+            throw new Error('Your session has expired. Please log in again.');
+          }
+          
+          console.log('✅ Session refreshed successfully');
         }
 
+        // Get the current session again (might be refreshed)
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
         response = await supabase.functions.invoke('vector-search', {
           body: { 
             question: content,
             aircraftModel: aircraftModel 
           },
           headers: {
-            Authorization: `Bearer ${session.access_token}`
+            Authorization: `Bearer ${currentSession?.access_token}`
           }
         });
       } else {
