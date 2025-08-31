@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import ConversationList from '@/components/ConversationList';
 import MessageList from '@/components/MessageList';
 import EnhancedMessageInput from '@/components/EnhancedMessageInput';
+import VoiceEnabledMessageInput from '@/components/VoiceEnabledMessageInput';
 import VoiceAgent from '@/components/VoiceAgent';
 
 
@@ -191,7 +192,7 @@ const Index = () => {
               <TabsContent value="A320" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} aircraftModel="A320" />
-                  <EnhancedMessageInput 
+                  <VoiceEnabledMessageInput 
                     onSendMessage={(message) => {
                       setActiveTab('A320');
                       switchAircraftModel('A320');
@@ -199,6 +200,8 @@ const Index = () => {
                     }}
                     isLoading={aircraftStates.A320.isLoading}
                     placeholder="Ask me a question"
+                    aircraftModel="A320"
+                    assistantId="A320-assistant"
                   />
                 </div>
               </TabsContent>
