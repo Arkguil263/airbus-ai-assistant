@@ -43,3 +43,6 @@ verify_jwt = false
 
 [functions.analyze-flight-files]
 verify_jwt = false
+
+[functions.verify-secret]
+verify_jwt = false

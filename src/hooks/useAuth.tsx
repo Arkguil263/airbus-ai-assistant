@@ -41,24 +41,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifySecretWord = async (secretWord: string) => {
     try {
-      // Check if the secret word matches any active secret in the database
-      const { data, error } = await supabase
-        .from('registration_secrets')
-        .select('secret_word')
-        .eq('is_active', true)
-        .eq('secret_word', secretWord)
-        .single();
+      // Call the secure edge function to verify the secret word
+      const { data, error } = await supabase.functions.invoke('verify-secret', {
+        body: { secretWord }
+      });
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No matching secret word found
-          return { isValid: false, error: "Invalid secret word. This knowledge base belongs to a private group and requires authorization to register." };
-        }
+        console.error('Error calling verify-secret function:', error);
         return { isValid: false, error: "Error verifying secret word. Please try again." };
       }
 
-      return { isValid: true };
+      return { 
+        isValid: data.isValid, 
+        error: data.error 
+      };
     } catch (err) {
+      console.error('Unexpected error in verifySecretWord:', err);
       return { isValid: false, error: "Error verifying secret word. Please try again." };
     }
   };
