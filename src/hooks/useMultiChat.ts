@@ -207,36 +207,56 @@ export const useMultiChat = () => {
         messages: messagesWithTyping
       });
 
-      console.log('📡 Calling edge function chat-assistant...');
+      console.log('📡 Calling edge function...');
       
-      // Call the edge function
-      const { data, error } = await supabase.functions.invoke('chat-assistant', {
-        body: {
-          message: content,
-          conversationId: targetConversationId,
-          aircraftModel: aircraftModel
-        }
-      });
-
-      console.log('📡 Edge function response:', { data, error });
-
-      if (error) {
-        console.error('❌ Edge function error:', error);
-        throw error;
+      // For A320, use vector search instead of chat-assistant
+      let response;
+      if (aircraftModel === 'A320') {
+        console.log('📡 Using vector search for A320...');
+        response = await supabase.functions.invoke('vector-search', {
+          body: { 
+            question: content,
+            aircraftModel: aircraftModel 
+          }
+        });
+      } else {
+        console.log('📡 Using chat-assistant for', aircraftModel);
+        response = await supabase.functions.invoke('chat-assistant', {
+          body: {
+            message: content,
+            conversationId: targetConversationId,
+            aircraftModel: aircraftModel
+          }
+        });
       }
 
-      if (!data || !data.response) {
-        console.error('❌ No response data from edge function:', data);
+      console.log('📡 Edge function response:', response);
+
+      if (response.error) {
+        console.error('❌ Edge function error:', response.error);
+        throw response.error;
+      }
+
+      // Handle different response formats
+      let aiResponse;
+      if (aircraftModel === 'A320') {
+        aiResponse = response.data?.answer;
+      } else {
+        aiResponse = response.data?.response;
+      }
+
+      if (!response.data || !aiResponse) {
+        console.error('❌ No response data from edge function:', response.data);
         throw new Error('No response received from AI assistant');
       }
 
-      console.log('✅ Received AI response:', data.response);
+      console.log('✅ Received AI response:', aiResponse);
 
       // Create assistant message from response
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: data.response,
+        content: aiResponse,
         created_at: new Date().toISOString(),
       };
 
