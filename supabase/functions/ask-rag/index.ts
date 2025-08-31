@@ -50,10 +50,10 @@ serve(async (req) => {
       body: JSON.stringify(payload),
     });
 
-    const data = await resp.json();
-    console.log('OpenAI response status:', resp.status);
+    const text = await resp.text();
+    let data: any = {};
+    try { data = JSON.parse(text) } catch { /* keep raw text */ }
 
-    // Normalize a simple text field for frontend display
     const output_text =
       data?.output_text ??
       (Array.isArray(data?.output) ? data.output.map((o: any) => o?.content ?? "").join("\n") : "");
@@ -61,8 +61,9 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       ok: resp.ok,
       status: resp.status,
+      error: resp.ok ? undefined : (data?.error ?? text),
       output_text,
-      raw: data, // keep for optional citations UI
+      raw: resp.ok ? data : undefined,
     }), {
       status: resp.ok ? 200 : resp.status,
       headers: { ...cors, "Content-Type": "application/json" },
