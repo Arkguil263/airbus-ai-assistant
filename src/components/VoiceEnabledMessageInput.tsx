@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Send, Mic, MicOff } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import VoiceTranscript from './VoiceTranscript';
 
 interface VoiceEnabledMessageInputProps {
   onSendMessage: (message: string) => void;
@@ -12,6 +13,13 @@ interface VoiceEnabledMessageInputProps {
   placeholder?: string;
   aircraftModel: string;
   assistantId?: string;
+}
+
+interface TranscriptMessage {
+  id: string;
+  type: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
 }
 
 const VoiceEnabledMessageInput = ({ 
@@ -26,6 +34,7 @@ const VoiceEnabledMessageInput = ({
   const [voiceConnected, setVoiceConnected] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
   const [connecting, setConnecting] = useState(false);
+  const [transcriptMessages, setTranscriptMessages] = useState<TranscriptMessage[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -101,16 +110,33 @@ const VoiceEnabledMessageInput = ({
         try {
           const event = JSON.parse(evt.data);
           
-          // Handle voice response completion - send to chat
+          // Handle voice response completion - add to transcript
           if (event.type === 'response.audio_transcript.done') {
             if (event.transcript && event.transcript.trim()) {
-              // Send the AI voice response as an assistant message directly, don't trigger another API call
               console.log('Voice response received:', event.transcript);
+              // Add AI response to transcript
+              const assistantMessage: TranscriptMessage = {
+                id: `assistant-${Date.now()}`,
+                type: 'assistant',
+                content: event.transcript,
+                timestamp: new Date(),
+              };
+              setTranscriptMessages(prev => [...prev, assistantMessage]);
             }
           } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
-            // Handle user speech transcription - send to vector search instead of regular chat
+            // Handle user speech transcription - add to transcript and send to vector search
             if (event.transcript && event.transcript.trim()) {
               console.log('User speech transcribed:', event.transcript);
+              
+              // Add user message to transcript
+              const userMessage: TranscriptMessage = {
+                id: `user-${Date.now()}`,
+                type: 'user',
+                content: event.transcript,
+                timestamp: new Date(),
+              };
+              setTranscriptMessages(prev => [...prev, userMessage]);
+              
               // Call vector search function instead of regular chat
               handleVectorSearch(event.transcript);
             }
@@ -174,6 +200,34 @@ const VoiceEnabledMessageInput = ({
     }
   };
 
+  const disconnectVoice = async () => {
+    if (!voiceConnected) return;
+    
+    setVoiceConnected(false);
+    dcRef.current?.close();
+    pcRef.current?.getSenders().forEach((s) => s.track?.stop());
+    pcRef.current?.close();
+    micStreamRef.current?.getTracks().forEach((t) => t.stop());
+    
+    dcRef.current = null;
+    pcRef.current = null;
+    micStreamRef.current = null;
+    
+    toast({
+      title: "Voice Disconnected",
+      description: "Voice chat has been disabled.",
+    });
+  };
+
+  const toggleMic = () => {
+    if (micStreamRef.current) {
+      micStreamRef.current.getAudioTracks().forEach(track => {
+        track.enabled = !micEnabled;
+      });
+      setMicEnabled(!micEnabled);
+    }
+  };
+
   // New function to handle vector search
   const handleVectorSearch = async (question: string) => {
     try {
@@ -212,34 +266,6 @@ const VoiceEnabledMessageInput = ({
     }
   };
 
-  const disconnectVoice = async () => {
-    if (!voiceConnected) return;
-    
-    setVoiceConnected(false);
-    dcRef.current?.close();
-    pcRef.current?.getSenders().forEach((s) => s.track?.stop());
-    pcRef.current?.close();
-    micStreamRef.current?.getTracks().forEach((t) => t.stop());
-    
-    dcRef.current = null;
-    pcRef.current = null;
-    micStreamRef.current = null;
-    
-    toast({
-      title: "Voice Disconnected",
-      description: "Voice chat has been disabled.",
-    });
-  };
-
-  const toggleMic = () => {
-    if (micStreamRef.current) {
-      micStreamRef.current.getAudioTracks().forEach(track => {
-        track.enabled = !micEnabled;
-      });
-      setMicEnabled(!micEnabled);
-    }
-  };
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -248,69 +274,78 @@ const VoiceEnabledMessageInput = ({
   }, []);
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3 p-4 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex-1 relative">
-        <Textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder || (disabled ? "Select a conversation to start chatting" : `Message ${aircraftModel} AI...`)}
-          disabled={disabled || isLoading}
-          className="min-h-[40px] max-h-[120px] resize-none overflow-y-hidden py-3 text-base leading-6 bg-background border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-          rows={1}
-        />
-      </div>
+    <div className="space-y-4">
+      {/* Voice Transcript */}
+      <VoiceTranscript 
+        messages={transcriptMessages} 
+        isVisible={voiceConnected && transcriptMessages.length > 0} 
+      />
       
-      {/* Voice Button */}
-      {!voiceConnected ? (
+      {/* Message Input Form */}
+      <form onSubmit={handleSubmit} className="flex gap-3 p-4 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex-1 relative">
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder || (disabled ? "Select a conversation to start chatting" : `Message ${aircraftModel} AI...`)}
+            disabled={disabled || isLoading}
+            className="min-h-[40px] max-h-[120px] resize-none overflow-y-hidden py-3 text-base leading-6 bg-background border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+            rows={1}
+          />
+        </div>
+        
+        {/* Voice Button */}
+        {!voiceConnected ? (
+          <Button 
+            type="button"
+            onClick={connectVoice} 
+            disabled={connecting || disabled}
+            variant="outline"
+            size="icon"
+            className="h-[44px] w-[44px] shrink-0 rounded-lg transition-all duration-200 hover:scale-105 disabled:scale-100"
+            title={`Enable voice chat for ${aircraftModel}`}
+          >
+            <Mic className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={toggleMic}
+            variant={micEnabled ? "default" : "secondary"}
+            size="icon"
+            className="h-[44px] w-[44px] shrink-0 rounded-lg transition-all duration-200 hover:scale-105"
+            title={micEnabled ? "Mute microphone" : "Unmute microphone"}
+          >
+            {micEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+          </Button>
+        )}
+
+        {/* Send Button */}
         <Button 
-          type="button"
-          onClick={connectVoice} 
-          disabled={connecting || disabled}
-          variant="outline"
+          type="submit" 
+          disabled={!message.trim() || isLoading || disabled}
           size="icon"
           className="h-[44px] w-[44px] shrink-0 rounded-lg transition-all duration-200 hover:scale-105 disabled:scale-100"
-          title={`Enable voice chat for ${aircraftModel}`}
         >
-          <Mic className="h-4 w-4" />
+          <Send className="h-4 w-4" />
         </Button>
-      ) : (
-        <Button
-          type="button"
-          onClick={toggleMic}
-          variant={micEnabled ? "default" : "secondary"}
-          size="icon"
-          className="h-[44px] w-[44px] shrink-0 rounded-lg transition-all duration-200 hover:scale-105"
-          title={micEnabled ? "Mute microphone" : "Unmute microphone"}
-        >
-          {micEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-        </Button>
-      )}
 
-      {/* Send Button */}
-      <Button 
-        type="submit" 
-        disabled={!message.trim() || isLoading || disabled}
-        size="icon"
-        className="h-[44px] w-[44px] shrink-0 rounded-lg transition-all duration-200 hover:scale-105 disabled:scale-100"
-      >
-        <Send className="h-4 w-4" />
-      </Button>
-
-      {/* Disconnect Voice Button (when connected) */}
-      {voiceConnected && (
-        <Button
-          type="button"
-          onClick={disconnectVoice}
-          variant="destructive"
-          size="sm"
-          className="h-[44px] px-3 shrink-0 rounded-lg transition-all duration-200"
-        >
-          Disconnect Voice
-        </Button>
-      )}
-    </form>
+        {/* Disconnect Voice Button (when connected) */}
+        {voiceConnected && (
+          <Button
+            type="button"
+            onClick={disconnectVoice}
+            variant="destructive"
+            size="sm"
+            className="h-[44px] px-3 shrink-0 rounded-lg transition-all duration-200"
+          >
+            Disconnect Voice
+          </Button>
+        )}
+      </form>
+    </div>
   );
 };
 
