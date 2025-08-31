@@ -213,10 +213,20 @@ export const useMultiChat = () => {
       let response;
       if (aircraftModel === 'A320') {
         console.log('📡 Using vector search for A320...');
+        
+        // Get the current session for authorization
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          throw new Error('No active session found. Please log in again.');
+        }
+
         response = await supabase.functions.invoke('vector-search', {
           body: { 
             question: content,
             aircraftModel: aircraftModel 
+          },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
           }
         });
       } else {
