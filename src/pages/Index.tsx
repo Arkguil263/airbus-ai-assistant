@@ -108,19 +108,22 @@ const Index = () => {
   const handleVoiceMessage = async (voiceMessage: { role: 'user' | 'assistant'; content: string; isVoice?: boolean }) => {
     try {
       const messageData = {
-        id: `voice-${Date.now()}`,
+        id: `voice-${voiceMessage.role}-${Date.now()}`,
         role: voiceMessage.role,
         content: voiceMessage.content,
         created_at: new Date().toISOString(),
         isVoice: voiceMessage.isVoice
       };
 
-      // Add voice message to current state
-      const currentMessages = getCurrentState().messages;
-      const updatedMessages = [...currentMessages, messageData];
-      
-      updateAircraftState(currentAircraftModel, {
-        messages: updatedMessages
+      // Add voice message to current state - always append to preserve history
+      updateAircraftState(currentAircraftModel, (prevState) => ({
+        messages: [...prevState.messages, messageData]
+      }));
+
+      console.log('✅ Voice message added to chat history:', {
+        role: voiceMessage.role,
+        content: voiceMessage.content.substring(0, 50) + '...',
+        totalMessages: getCurrentState().messages.length + 1
       });
 
     } catch (error) {
