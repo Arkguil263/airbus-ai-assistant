@@ -7,12 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { validateEmail, validatePassword, authRateLimiter, registrationRateLimiter, logSecurityEvent } from '@/lib/validation';
+import { AlertCircle, Check } from 'lucide-react';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secretWord, setSecretWord] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [emailErrors, setEmailErrors] = useState<string[]>([]);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [showPasswordStrength, setShowPasswordStrength] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -24,11 +29,56 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
+  // Validation functions
+  const validateEmailInput = (emailValue: string) => {
+    const result = validateEmail(emailValue);
+    setEmailErrors(result.errors);
+    return result.isValid;
+  };
+
+  const validatePasswordInput = (passwordValue: string) => {
+    const result = validatePassword(passwordValue);
+    setPasswordErrors(result.errors);
+    return result.isValid;
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Rate limiting check
+    if (!authRateLimiter.canAttempt(email)) {
+      const remainingTime = Math.ceil(authRateLimiter.getRemainingTime(email) / 1000 / 60);
+      toast({
+        title: "Too many attempts",
+        description: `Please wait ${remainingTime} minutes before trying again.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate inputs
+    const isEmailValid = validateEmailInput(email);
+    if (!isEmailValid) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     const { error } = await signIn(email, password);
+    
+    // Log security event
+    logSecurityEvent({
+      type: 'auth_attempt',
+      email,
+      success: !error,
+      error: error?.message,
+      userAgent: navigator.userAgent,
+    });
     
     if (error) {
       toast({
@@ -48,9 +98,52 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Rate limiting check
+    if (!registrationRateLimiter.canAttempt(email)) {
+      const remainingTime = Math.ceil(registrationRateLimiter.getRemainingTime(email) / 1000 / 60);
+      toast({
+        title: "Too many registration attempts",
+        description: `Please wait ${remainingTime} minutes before trying again.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate inputs
+    const isEmailValid = validateEmailInput(email);
+    const isPasswordValid = validatePasswordInput(password);
+    
+    if (!isEmailValid || !isPasswordValid) {
+      toast({
+        title: "Validation failed",
+        description: "Please fix the errors below and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!secretWord.trim()) {
+      toast({
+        title: "Secret word required",
+        description: "Please enter the secret word to register.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     const { error } = await signUp(email, password, secretWord);
+    
+    // Log security event
+    logSecurityEvent({
+      type: 'registration_attempt',
+      email,
+      success: !error,
+      error: error?.message,
+      userAgent: navigator.userAgent,
+    });
     
     if (error) {
       toast({
@@ -69,6 +162,8 @@ const Auth = () => {
       setEmail('');
       setPassword('');
       setSecretWord('');
+      setEmailErrors([]);
+      setPasswordErrors([]);
     }
     
     setIsLoading(false);
@@ -90,28 +185,38 @@ const Auth = () => {
             
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="signin-email">Email</Label>
+                   <Input
+                     id="signin-email"
+                     type="email"
+                     placeholder="Enter your email"
+                     value={email}
+                     onChange={(e) => {
+                       setEmail(e.target.value);
+                       if (e.target.value) validateEmailInput(e.target.value);
+                     }}
+                     className={emailErrors.length > 0 ? 'border-destructive' : ''}
+                     required
+                   />
+                   {emailErrors.length > 0 && (
+                     <div className="flex items-center gap-1 text-sm text-destructive">
+                       <AlertCircle className="h-4 w-4" />
+                       <span>{emailErrors[0]}</span>
+                     </div>
+                   )}
+                 </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="signin-password">Password</Label>
+                   <Input
+                     id="signin-password"
+                     type="password"
+                     placeholder="Enter your password"
+                     value={password}
+                     onChange={(e) => setPassword(e.target.value)}
+                     required
+                   />
+                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
@@ -134,28 +239,61 @@ const Auth = () => {
                     You need to know the secret word to register!
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="signup-email">Email</Label>
+                   <Input
+                     id="signup-email"
+                     type="email"
+                     placeholder="Enter your email"
+                     value={email}
+                     onChange={(e) => {
+                       setEmail(e.target.value);
+                       if (e.target.value) validateEmailInput(e.target.value);
+                     }}
+                     className={emailErrors.length > 0 ? 'border-destructive' : ''}
+                     required
+                   />
+                   {emailErrors.length > 0 && (
+                     <div className="flex items-center gap-1 text-sm text-destructive">
+                       <AlertCircle className="h-4 w-4" />
+                       <span>{emailErrors[0]}</span>
+                     </div>
+                   )}
+                 </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="signup-password">Password</Label>
+                   <Input
+                     id="signup-password"
+                     type="password"
+                     placeholder="Create a password (min 8 chars, mixed case, numbers, symbols)"
+                     value={password}
+                     onChange={(e) => {
+                       setPassword(e.target.value);
+                       setShowPasswordStrength(e.target.value.length > 0);
+                       if (e.target.value) validatePasswordInput(e.target.value);
+                     }}
+                     className={passwordErrors.length > 0 ? 'border-destructive' : ''}
+                     required
+                   />
+                   {showPasswordStrength && (
+                     <div className="space-y-1">
+                       {passwordErrors.length > 0 ? (
+                         <div className="flex items-center gap-1 text-sm text-destructive">
+                           <AlertCircle className="h-4 w-4" />
+                           <span>{passwordErrors[0]}</span>
+                         </div>
+                       ) : (
+                         <div className="flex items-center gap-1 text-sm text-green-600">
+                           <Check className="h-4 w-4" />
+                           <span>Password meets security requirements</span>
+                         </div>
+                       )}
+                       <div className="text-xs text-muted-foreground">
+                         Password strength: 8+ chars, uppercase, lowercase, number, symbol
+                       </div>
+                     </div>
+                   )}
+                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Sign Up"}
                 </Button>
