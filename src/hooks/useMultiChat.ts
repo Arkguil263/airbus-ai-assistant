@@ -209,37 +209,19 @@ export const useMultiChat = () => {
 
       console.log('📡 Calling edge function...');
       
-      // For A320, use vector search instead of chat-assistant
+      // For A320, use ask-rag instead of chat-assistant
       let response;
       if (aircraftModel === 'A320') {
-        console.log('📡 Using vector search for A320...');
+        console.log('📡 Using ask-rag for A320...');
         
-        // Get the current session and refresh if needed
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        console.log('Session check:', { hasSession: !!session, sessionError });
+        // Get the A320 vector store ID
+        const vectorStoreId = 'vs_68b26a9a7c908191b3c0312dce435605'; // A320 vector store ID
         
-        if (sessionError || !session?.access_token) {
-          console.log('🔄 Attempting to refresh session...');
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError || !refreshData.session?.access_token) {
-            console.error('❌ Session refresh failed:', refreshError);
-            throw new Error('Your session has expired. Please log in again.');
-          }
-          
-          console.log('✅ Session refreshed successfully');
-        }
-
-        // Get the current session again (might be refreshed)
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
-        response = await supabase.functions.invoke('vector-search', {
+        response = await supabase.functions.invoke('ask-rag', {
           body: { 
-            question: content,
-            aircraftModel: aircraftModel 
-          },
-          headers: {
-            Authorization: `Bearer ${currentSession?.access_token}`
+            query: content,
+            vector_store_id: vectorStoreId,
+            max_results: 8
           }
         });
       } else {
@@ -263,7 +245,12 @@ export const useMultiChat = () => {
       // Handle different response formats
       let aiResponse;
       if (aircraftModel === 'A320') {
-        aiResponse = response.data?.answer;
+        // Handle ask-rag response format
+        if (!response.data?.ok) {
+          console.error('RAG API error:', response.data);
+          throw new Error(response.data?.error || `RAG failed with status ${response.data?.status}`);
+        }
+        aiResponse = response.data?.output_text;
       } else {
         aiResponse = response.data?.response;
       }
