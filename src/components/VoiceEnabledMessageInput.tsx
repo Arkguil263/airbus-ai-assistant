@@ -104,11 +104,13 @@ const VoiceEnabledMessageInput = ({
           // Handle voice response completion - send to chat
           if (event.type === 'response.audio_transcript.done') {
             if (event.transcript && event.transcript.trim()) {
-              onSendMessage(`[Voice Response]: ${event.transcript}`);
+              // Send the AI voice response as an assistant message directly, don't trigger another API call
+              console.log('Voice response received:', event.transcript);
             }
           } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
-            // Handle user speech transcription
+            // Handle user speech transcription - send as user message
             if (event.transcript && event.transcript.trim()) {
+              console.log('User speech transcribed:', event.transcript);
               // Send the transcribed user input to the chat system
               onSendMessage(event.transcript);
             }
