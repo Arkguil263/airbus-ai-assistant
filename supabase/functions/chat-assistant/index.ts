@@ -85,9 +85,9 @@ serve(async (req) => {
       });
 
       if (!threadResponse.ok) {
-        const error = await threadResponse.text();
-        console.error('Thread creation failed:', error);
-        throw new Error(`Failed to create thread: ${error}`);
+        const errorText = await threadResponse.text();
+        console.error('Thread creation failed:', errorText);
+        throw new Error(`Failed to create thread: ${errorText}`);
       }
 
       const thread = await threadResponse.json();
@@ -123,9 +123,9 @@ serve(async (req) => {
     });
 
     if (!messageResponse.ok) {
-      const error = await messageResponse.text();
-      console.error('Message creation failed:', error);
-      throw new Error(`Failed to add message: ${error}`);
+      const errorText = await messageResponse.text();
+      console.error('Message creation failed:', errorText);
+      throw new Error(`Failed to add message: ${errorText}`);
     }
 
     // Create and poll run
@@ -143,9 +143,9 @@ serve(async (req) => {
     });
 
     if (!runResponse.ok) {
-      const error = await runResponse.text();
-      console.error('Run creation failed:', error);
-      throw new Error(`Failed to create run: ${error}`);
+      const errorText = await runResponse.text();
+      console.error('Run creation failed:', errorText);
+      throw new Error(`Failed to create run: ${errorText}`);
     }
 
     const run = await runResponse.json();
