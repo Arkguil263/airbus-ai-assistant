@@ -16,14 +16,21 @@ serve(async (req) => {
   try {
     const { question, aircraftModel = 'A320' } = await req.json();
     console.log('Vector search request:', { question, aircraftModel });
+    console.log('Available env variables:', {
+      hasOpenAI: !!Deno.env.get('OPENAI_API_KEY'),
+      hasA320VectorStore: !!Deno.env.get('OPENAI_A320_VECTOR_STORE_ID'),
+      a320VectorStoreId: Deno.env.get('OPENAI_A320_VECTOR_STORE_ID')
+    });
 
     // Validate input
     if (!question) {
+      console.error('Missing question parameter');
       throw new Error('Missing required parameter: question');
     }
 
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) {
+      console.error('OpenAI API key not found in environment');
       throw new Error('OpenAI API key not configured');
     }
 
@@ -38,6 +45,8 @@ serve(async (req) => {
     }
 
     if (!vectorStoreId) {
+      console.error(`Vector store ID not configured for aircraft model: ${aircraftModel}`);
+      console.error('Available env keys:', Object.keys(Deno.env.toObject()).filter(k => k.includes('VECTOR')));
       throw new Error(`Vector store ID not configured for aircraft model: ${aircraftModel}`);
     }
 
