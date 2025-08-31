@@ -31,14 +31,12 @@ serve(async (req) => {
     const payload = {
       model: "gpt-4o-mini",
       input: query,
-      tools: [{ type: "file_search" }],
-      tool_config: {
-        file_search: {
-          vector_store_ids: [vector_store_id],
-          max_num_results: typeof max_results === "number" ? max_results : 8,
-        },
-      },
-      // system: "Answer strictly from the provided files; if unsure, say so."
+      tools: [{
+        type: "file_search",
+        vector_store_ids: [vector_store_id],
+        max_num_results: typeof max_results === "number" ? max_results : 8,
+      }],
+      tool_choice: "required" // Force file search to be used
     };
 
     const resp = await fetch("https://api.openai.com/v1/responses", {
