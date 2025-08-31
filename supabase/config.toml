@@ -46,3 +46,9 @@ verify_jwt = false
 
 [functions.verify-secret]
 verify_jwt = false
+
+[functions.realtime-session-a330]
+verify_jwt = false
+
+[functions.vector-search-a330]
+verify_jwt = false

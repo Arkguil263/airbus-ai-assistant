@@ -81,7 +81,9 @@ const VoiceEnabledMessageInput = ({
         You have access to ${aircraftModel} manuals and technical documentation. 
         Keep replies concise and friendly. Focus on ${aircraftModel}-specific information when answering questions.`;
         
-      const { data, error } = await supabase.functions.invoke('realtime-session', {
+      // Use aircraft-specific realtime session endpoint
+      const sessionEndpoint = aircraftModel === 'A330' ? 'realtime-session-a330' : 'realtime-session';
+      const { data, error } = await supabase.functions.invoke(sessionEndpoint, {
         body: { instructions }
       });
 
@@ -231,8 +233,9 @@ const VoiceEnabledMessageInput = ({
     try {
       console.log('Calling vector search for:', question);
       
-      // Call vector search without adding duplicate message (already added via onVoiceMessage)
-      const { data, error } = await supabase.functions.invoke('vector-search', {
+      // Use aircraft-specific vector search endpoint
+      const vectorSearchEndpoint = aircraftModel === 'A330' ? 'vector-search-a330' : 'vector-search';
+      const { data, error } = await supabase.functions.invoke(vectorSearchEndpoint, {
         body: { 
           question: question,
           aircraftModel: aircraftModel 
