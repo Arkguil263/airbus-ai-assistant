@@ -52,9 +52,22 @@ serve(async (req) => {
     let data: any = {};
     try { data = JSON.parse(text) } catch { /* keep raw text */ }
 
-    const output_text =
-      data?.output_text ??
-      (Array.isArray(data?.output) ? data.output.map((o: any) => o?.content ?? "").join("\n") : "");
+    console.log('OpenAI response:', JSON.stringify(data, null, 2));
+
+    // Extract text content from the OpenAI Responses API format
+    let output_text = "";
+    if (data?.output && Array.isArray(data.output)) {
+      // Extract content from the output array
+      output_text = data.output
+        .map((item: any) => {
+          if (item?.content && Array.isArray(item.content)) {
+            return item.content.map((c: any) => c?.text || "").join("");
+          }
+          return item?.content || "";
+        })
+        .join("\n")
+        .trim();
+    }
 
     return new Response(JSON.stringify({
       ok: resp.ok,
