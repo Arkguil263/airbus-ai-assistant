@@ -44,6 +44,13 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
+  // Sync active tab with current aircraft model
+  useEffect(() => {
+    if (currentAircraftModel && currentAircraftModel !== activeTab) {
+      setActiveTab(currentAircraftModel);
+    }
+  }, [currentAircraftModel]);
+
   const handleSendMessage = async (message: string) => {
     console.log('🚀 handleSendMessage called with:', message);
     console.log('🚀 Current aircraft model:', currentAircraftModel);
@@ -211,7 +218,12 @@ const Index = () => {
 
         {/* Main content area with tabs */}
         <div className="flex-1 flex flex-col">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          <Tabs value={activeTab} onValueChange={(value) => {
+            setActiveTab(value);
+            if (value === 'A320' || value === 'A330' || value === 'A350') {
+              switchAircraftModel(value);
+            }
+          }} className="h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-4 mx-2 sm:mx-4 mt-4 mb-4 shrink-0 min-w-0">
               <TabsTrigger value="A320" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A320</TabsTrigger>
               <TabsTrigger value="A330" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A330</TabsTrigger>
@@ -225,13 +237,9 @@ const Index = () => {
                   <MessageList messages={aircraftStates.A320.messages} isLoading={aircraftStates.A320.isLoading} aircraftModel="A320" />
                   <VoiceEnabledMessageInput 
                     onSendMessage={(message) => {
-                      setActiveTab('A320');
-                      switchAircraftModel('A320');
                       handleSendMessage(message);
                     }}
                     onVoiceMessage={(voiceMessage) => {
-                      setActiveTab('A320');
-                      switchAircraftModel('A320');
                       handleVoiceMessage(voiceMessage);
                     }}
                     isLoading={aircraftStates.A320.isLoading}
@@ -245,14 +253,17 @@ const Index = () => {
               <TabsContent value="A330" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A330.messages} isLoading={aircraftStates.A330.isLoading} aircraftModel="A330" />
-                  <EnhancedMessageInput 
+                  <VoiceEnabledMessageInput 
                     onSendMessage={(message) => {
-                      setActiveTab('A330');
-                      switchAircraftModel('A330');
                       handleSendMessage(message);
+                    }}
+                    onVoiceMessage={(voiceMessage) => {
+                      handleVoiceMessage(voiceMessage);
                     }}
                     isLoading={aircraftStates.A330.isLoading}
                     placeholder="Ask me a question"
+                    aircraftModel="A330"
+                    assistantId="A330-assistant"
                   />
                 </div>
               </TabsContent>
