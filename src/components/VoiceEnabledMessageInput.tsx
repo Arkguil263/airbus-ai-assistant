@@ -108,11 +108,11 @@ const VoiceEnabledMessageInput = ({
               console.log('Voice response received:', event.transcript);
             }
           } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
-            // Handle user speech transcription - send as user message
+            // Handle user speech transcription - send to vector search instead of regular chat
             if (event.transcript && event.transcript.trim()) {
               console.log('User speech transcribed:', event.transcript);
-              // Send the transcribed user input to the chat system
-              onSendMessage(event.transcript);
+              // Call vector search function instead of regular chat
+              handleVectorSearch(event.transcript);
             }
           }
         } catch (error) {
@@ -171,6 +171,44 @@ const VoiceEnabledMessageInput = ({
       });
     } finally {
       setConnecting(false);
+    }
+  };
+
+  // New function to handle vector search
+  const handleVectorSearch = async (question: string) => {
+    try {
+      console.log('Calling vector search for:', question);
+      
+      // First add the user question to the chat
+      onSendMessage(question);
+      
+      // Then call vector search
+      const { data, error } = await supabase.functions.invoke('vector-search', {
+        body: { 
+          question: question,
+          aircraftModel: aircraftModel 
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Add the response to chat as an assistant message
+      if (data?.answer) {
+        // Create a simulated assistant message for the chat system
+        setTimeout(() => {
+          onSendMessage(`AI: ${data.answer}`);
+        }, 500);
+      }
+
+    } catch (error) {
+      console.error('Vector search error:', error);
+      toast({
+        title: "Search Failed",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
