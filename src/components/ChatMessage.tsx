@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bot, User, Copy, Check } from 'lucide-react';
+import { Bot, User, Copy, Check, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Message } from '@/hooks/useMultiChat';
 import TypingIndicator from './TypingIndicator';
@@ -41,8 +41,13 @@ const ChatMessage = ({ message, aircraftModel }: ChatMessageProps) => {
       } ${message.isPending ? 'opacity-70' : ''}`}
     >
       {message.role === 'assistant' && (
-        <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+        <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center relative">
           <Bot className="h-4 w-4 text-primary" />
+          {message.isVoice && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+              <Mic className="h-2 w-2 text-white" />
+            </div>
+          )}
         </div>
       )}
       
@@ -78,8 +83,13 @@ const ChatMessage = ({ message, aircraftModel }: ChatMessageProps) => {
       </div>
 
       {message.role === 'user' && (
-        <div className="flex-shrink-0 w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+        <div className="flex-shrink-0 w-8 h-8 bg-secondary rounded-full flex items-center justify-center relative">
           <User className="h-4 w-4 text-secondary-foreground" />
+          {message.isVoice && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+              <Mic className="h-2 w-2 text-white" />
+            </div>
+          )}
         </div>
       )}
     </div>

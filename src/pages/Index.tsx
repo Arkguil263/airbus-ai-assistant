@@ -105,6 +105,34 @@ const Index = () => {
     }
   };
 
+  const handleVoiceMessage = async (voiceMessage: { role: 'user' | 'assistant'; content: string; isVoice?: boolean }) => {
+    try {
+      const messageData = {
+        id: `voice-${Date.now()}`,
+        role: voiceMessage.role,
+        content: voiceMessage.content,
+        created_at: new Date().toISOString(),
+        isVoice: voiceMessage.isVoice
+      };
+
+      // Add voice message to current state
+      const currentMessages = getCurrentState().messages;
+      const updatedMessages = [...currentMessages, messageData];
+      
+      updateAircraftState(currentAircraftModel, {
+        messages: updatedMessages
+      });
+
+    } catch (error) {
+      console.error('❌ Error handling voice message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process voice message",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -197,6 +225,11 @@ const Index = () => {
                       setActiveTab('A320');
                       switchAircraftModel('A320');
                       handleSendMessage(message);
+                    }}
+                    onVoiceMessage={(voiceMessage) => {
+                      setActiveTab('A320');
+                      switchAircraftModel('A320');
+                      handleVoiceMessage(voiceMessage);
                     }}
                     isLoading={aircraftStates.A320.isLoading}
                     placeholder="Ask me a question"

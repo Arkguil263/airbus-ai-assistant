@@ -9,6 +9,7 @@ export interface Message {
   created_at: string;
   isPending?: boolean;
   isTyping?: boolean;
+  isVoice?: boolean;
 }
 
 export interface Conversation {

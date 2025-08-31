@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Send, Mic, MicOff } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import VoiceTranscript from './VoiceTranscript';
+
 
 interface VoiceEnabledMessageInputProps {
   onSendMessage: (message: string) => void;
@@ -13,6 +13,7 @@ interface VoiceEnabledMessageInputProps {
   placeholder?: string;
   aircraftModel: string;
   assistantId?: string;
+  onVoiceMessage?: (message: { role: 'user' | 'assistant'; content: string; isVoice?: boolean }) => void;
 }
 
 interface TranscriptMessage {
@@ -28,13 +29,14 @@ const VoiceEnabledMessageInput = ({
   disabled, 
   placeholder,
   aircraftModel,
-  assistantId 
+  assistantId,
+  onVoiceMessage 
 }: VoiceEnabledMessageInputProps) => {
   const [message, setMessage] = useState('');
   const [voiceConnected, setVoiceConnected] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
   const [connecting, setConnecting] = useState(false);
-  const [transcriptMessages, setTranscriptMessages] = useState<TranscriptMessage[]>([]);
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -110,32 +112,28 @@ const VoiceEnabledMessageInput = ({
         try {
           const event = JSON.parse(evt.data);
           
-          // Handle voice response completion - add to transcript
+          // Handle voice response completion - add to main chat
           if (event.type === 'response.audio_transcript.done') {
             if (event.transcript && event.transcript.trim()) {
               console.log('Voice response received:', event.transcript);
-              // Add AI response to transcript
-              const assistantMessage: TranscriptMessage = {
-                id: `assistant-${Date.now()}`,
-                type: 'assistant',
-                content: event.transcript,
-                timestamp: new Date(),
-              };
-              setTranscriptMessages(prev => [...prev, assistantMessage]);
+              // Add AI response to main chat
+              onVoiceMessage?.({ 
+                role: 'assistant', 
+                content: event.transcript, 
+                isVoice: true 
+              });
             }
           } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
-            // Handle user speech transcription - add to transcript and send to vector search
+            // Handle user speech transcription - add to main chat and send to vector search
             if (event.transcript && event.transcript.trim()) {
               console.log('User speech transcribed:', event.transcript);
               
-              // Add user message to transcript
-              const userMessage: TranscriptMessage = {
-                id: `user-${Date.now()}`,
-                type: 'user',
-                content: event.transcript,
-                timestamp: new Date(),
-              };
-              setTranscriptMessages(prev => [...prev, userMessage]);
+              // Add user message to main chat
+              onVoiceMessage?.({ 
+                role: 'user', 
+                content: event.transcript, 
+                isVoice: true 
+              });
               
               // Call vector search function instead of regular chat
               handleVectorSearch(event.transcript);
@@ -233,10 +231,7 @@ const VoiceEnabledMessageInput = ({
     try {
       console.log('Calling vector search for:', question);
       
-      // First add the user question to the chat
-      onSendMessage(question);
-      
-      // Then call vector search
+      // Call vector search without adding duplicate message (already added via onVoiceMessage)
       const { data, error } = await supabase.functions.invoke('vector-search', {
         body: { 
           question: question,
@@ -250,9 +245,12 @@ const VoiceEnabledMessageInput = ({
 
       // Add the response to chat as an assistant message
       if (data?.answer) {
-        // Create a simulated assistant message for the chat system
         setTimeout(() => {
-          onSendMessage(`AI: ${data.answer}`);
+          onVoiceMessage?.({ 
+            role: 'assistant', 
+            content: data.answer, 
+            isVoice: true 
+          });
         }, 500);
       }
 
@@ -275,12 +273,6 @@ const VoiceEnabledMessageInput = ({
 
   return (
     <div className="space-y-4">
-      {/* Voice Transcript */}
-      <VoiceTranscript 
-        messages={transcriptMessages} 
-        isVisible={voiceConnected && transcriptMessages.length > 0} 
-      />
-      
       {/* Message Input Form */}
       <form onSubmit={handleSubmit} className="flex gap-3 p-4 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex-1 relative">
