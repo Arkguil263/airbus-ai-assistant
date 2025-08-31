@@ -10,23 +10,19 @@ const cors = {
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: cors });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: cors });
 
   try {
     if (!OPENAI_API_KEY) {
       return new Response(JSON.stringify({ error: "Missing OPENAI_API_KEY" }), {
-        status: 500,
-        headers: { ...cors, "Content-Type": "application/json" },
+        status: 500, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
     const { query, vector_store_id, max_results } = await req.json().catch(() => ({}));
     if (!query || !vector_store_id) {
       return new Response(JSON.stringify({ error: "Provide { query, vector_store_id }" }), {
-        status: 400,
-        headers: { ...cors, "Content-Type": "application/json" },
+        status: 400, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -38,10 +34,11 @@ serve(async (req) => {
       tools: [{ type: "file_search" }],
       tool_config: {
         file_search: {
-          vector_store_ids: [vector_store_id], // restrict to YOUR store
+          vector_store_ids: [vector_store_id],
           max_num_results: typeof max_results === "number" ? max_results : 8,
         },
       },
+      // system: "Answer strictly from the provided files; if unsure, say so."
     };
 
     const resp = await fetch("https://api.openai.com/v1/responses", {
@@ -56,27 +53,25 @@ serve(async (req) => {
     const data = await resp.json();
     console.log('OpenAI response status:', resp.status);
 
-    // Normalize text output for the frontend
+    // Normalize a simple text field for frontend display
     const output_text =
-      (data?.output_text) ??
+      data?.output_text ??
       (Array.isArray(data?.output) ? data.output.map((o: any) => o?.content ?? "").join("\n") : "");
 
-    const result = {
+    return new Response(JSON.stringify({
       ok: resp.ok,
       status: resp.status,
       output_text,
-      raw: data, // keep for debugging / citations UI
-    };
-
-    return new Response(JSON.stringify(result), {
+      raw: data, // keep for optional citations UI
+    }), {
       status: resp.ok ? 200 : resp.status,
       headers: { ...cors, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    console.error("ask-rag error:", err);
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
-      headers: { ...cors, "Content-Type": "application/json" },
+  } catch (e) {
+    console.error("ask-rag error:", e);
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 500, headers: { ...cors, "Content-Type": "application/json" },
     });
   }
+});
 });
