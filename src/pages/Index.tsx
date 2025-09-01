@@ -271,14 +271,17 @@ const Index = () => {
               <TabsContent value="A350" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   <MessageList messages={aircraftStates.A350.messages} isLoading={aircraftStates.A350.isLoading} aircraftModel="A350" />
-                  <EnhancedMessageInput 
+                  <VoiceEnabledMessageInput 
                     onSendMessage={(message) => {
-                      setActiveTab('A350');
-                      switchAircraftModel('A350');
                       handleSendMessage(message);
+                    }}
+                    onVoiceMessage={(voiceMessage) => {
+                      handleVoiceMessage(voiceMessage);
                     }}
                     isLoading={aircraftStates.A350.isLoading}
                     placeholder="Ask me a question"
+                    aircraftModel="A350"
+                    assistantId="A350-assistant"
                   />
                 </div>
               </TabsContent>
