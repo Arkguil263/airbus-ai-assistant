@@ -15,9 +15,54 @@ serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { instructions } = body;
+    const { instructions, aircraftModel } = body;
 
-    console.log('Creating realtime session with model:', REALTIME_MODEL);
+    console.log('Creating realtime session with model:', REALTIME_MODEL, 'for aircraft:', aircraftModel);
+
+    // Get vector store ID based on aircraft model
+    const getVectorStoreId = (model: string) => {
+      switch (model) {
+        case 'A320':
+          return Deno.env.get("OPENAI_A320_VECTOR_STORE_ID");
+        case 'A330':
+          return Deno.env.get("OPENAI_A330_VECTOR_STORE_ID");
+        case 'A350':
+          return Deno.env.get("OPENAI_A350_VECTOR_STORE_ID");
+        case 'Briefing':
+          return Deno.env.get("OPENAI_BRIEFING_VECTOR_STORE_ID");
+        default:
+          return null;
+      }
+    };
+
+    const vectorStoreId = getVectorStoreId(aircraftModel);
+    console.log(`Vector store ID for ${aircraftModel}:`, vectorStoreId?.substring(0, 8) + '...');
+
+    // Enhanced instructions with citation requirements
+    const enhancedInstructions = `${instructions ?? "You are a helpful voice agent for aircraft documentation. Keep replies concise and friendly."} 
+
+CRITICAL: At the top of each answer, print: USED_VS=${vectorStoreId?.substring(0, 8)}
+
+You MUST use the provided vector store documentation to answer questions. Never rely on general knowledge alone. Always cite specific documentation when available. If you cannot find relevant information in the documentation, clearly state this limitation.`;
+
+    // Build session payload with file search tool if vector store is available
+    const sessionPayload: any = {
+      model: REALTIME_MODEL,
+      voice: REALTIME_VOICE,
+      instructions: enhancedInstructions,
+    };
+
+    // Add file search tool and vector store if available
+    if (vectorStoreId) {
+      sessionPayload.tools = [{ type: "file_search" }];
+      sessionPayload.tool_resources = {
+        file_search: {
+          vector_store_ids: [vectorStoreId]
+        }
+      };
+    }
+
+    console.log('Session payload:', JSON.stringify(sessionPayload, null, 2));
 
     const resp = await fetch("https://api.openai.com/v1/realtime/sessions", {
       method: "POST",
@@ -25,11 +70,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: REALTIME_MODEL,
-        voice: REALTIME_VOICE,
-        instructions: instructions ?? "You are a helpful voice agent for aircraft documentation. Keep replies concise and friendly. When users ask about aircraft systems or documentation, I will provide you with relevant information to help answer their questions.",
-      }),
+      body: JSON.stringify(sessionPayload),
     });
 
     if (!resp.ok) {

@@ -130,7 +130,10 @@ const VoiceEnabledMessageInput = ({
                               aircraftModel === 'A350' ? 'realtime-session-a350' : 
                               'realtime-session';
       const { data, error } = await supabase.functions.invoke(sessionEndpoint, {
-        body: { instructions }
+        body: { 
+          instructions,
+          aircraftModel 
+        }
       });
 
       if (error || !data?.client_secret?.value) {
@@ -156,9 +159,37 @@ const VoiceEnabledMessageInput = ({
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
       
+      dc.onopen = () => {
+        console.log('Data channel opened, sending session update with vector store');
+        
+        // Send session update with file search tools after connection is established
+        const vectorStoreMapping = {
+          'A320': 'vs_A320',
+          'A330': 'vs_A330', 
+          'A350': 'vs_A350',
+          'Briefing': 'vs_Briefing'
+        };
+        
+        const sessionUpdate = {
+          type: 'session.update',
+          session: {
+            tools: [{ type: "file_search" }],
+            tool_resources: {
+              file_search: {
+                vector_store_ids: [vectorStoreMapping[aircraftModel] || 'vs_default']
+              }
+            }
+          }
+        };
+        
+        console.log(`Updating session with vector store for ${aircraftModel}:`, sessionUpdate);
+        dc.send(JSON.stringify(sessionUpdate));
+      };
+      
       dc.onmessage = (evt) => {
         try {
           const event = JSON.parse(evt.data);
+          console.log('WebRTC event received:', event.type, event);
           
           // Handle voice response completion - add to main chat
           if (event.type === 'response.audio_transcript.done') {
@@ -173,22 +204,39 @@ const VoiceEnabledMessageInput = ({
               // Note: Don't stop speaking indicator here, wait for response.done
             }
           } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
-            // Handle user speech transcription - add to main chat and send to vector search
+            // Handle user speech transcription - add to main chat
             if (event.transcript && event.transcript.trim()) {
               console.log('User speech transcribed:', event.transcript);
               
-              // Skip vector search for initial greeting to prevent double response
-              if (event.transcript.toLowerCase() !== 'hello') {
-                // Add user message to main chat
-                onVoiceMessage?.({ 
-                  role: 'user', 
-                  content: event.transcript, 
-                  isVoice: true 
-                });
-                
-                // Call vector search function instead of regular chat
-                handleVectorSearch(event.transcript);
-              }
+              // Add user message to main chat
+              onVoiceMessage?.({ 
+                role: 'user', 
+                content: event.transcript, 
+                isVoice: true 
+              });
+              
+              // Create conversation item and trigger response (using file search tools)
+              const conversationItem = {
+                type: 'conversation.item.create',
+                item: {
+                  type: 'message',
+                  role: 'user',
+                  content: [
+                    {
+                      type: 'input_text',
+                      text: event.transcript
+                    }
+                  ]
+                }
+              };
+              
+              dc.send(JSON.stringify(conversationItem));
+              dc.send(JSON.stringify({
+                type: 'response.create',
+                response: {
+                  modalities: ["audio", "text"]
+                }
+              }));
             }
           } else if (event.type === 'response.audio.delta') {
             // AI is speaking
