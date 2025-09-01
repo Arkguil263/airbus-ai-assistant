@@ -16,9 +16,6 @@ const VoiceAnimation = ({ isVisible, aircraftModel = 'A320' }: VoiceAnimationPro
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
-      {/* Background overlay with subtle opacity */}
-      <div className="absolute inset-0 bg-black/10 backdrop-blur-sm animate-fade-in" />
-      
       {/* Main animation container */}
       <div className="relative flex flex-col items-center justify-center animate-scale-in">
         {/* Siri-like wave animation */}
