@@ -206,16 +206,7 @@ export default function VoiceAgent() {
 
       const answer = data?.answer || 'No answer found in briefing documentation.';
 
-      // Add the assistant's response to the conversation
-      const assistantMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant' as const,
-        content: answer,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // 2) If voice connection is active, also tell Realtime model to SPEAK this text
+      // 2) Tell Realtime model to SPEAK this text
       if (dcRef.current && dcRef.current.readyState === 'open') {
         const payload = {
           type: "conversation.item.create",
@@ -237,6 +228,8 @@ export default function VoiceAgent() {
         dcRef.current.send(JSON.stringify({
           type: "response.create"
         }));
+      } else {
+        console.log('Data channel not ready');
       }
 
     } catch (error) {
@@ -289,10 +282,10 @@ export default function VoiceAgent() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Conversation Display - Fixed height with scroll */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        <ScrollArea className="flex-1 h-full">
-          <div className="p-4 space-y-4">
+      {/* Conversation Display */}
+      <div className="flex-1 flex flex-col">
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4">
             {messages.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
                 <Mic className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -315,7 +308,7 @@ export default function VoiceAgent() {
                     <div className="text-sm font-medium mb-1">
                       {message.role === 'user' ? 'You' : 'Assistant'}
                     </div>
-                    <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                    <div className="text-sm">{message.content}</div>
                     <div className="text-xs opacity-70 mt-1">
                       {message.timestamp.toLocaleTimeString()}
                     </div>
@@ -339,6 +332,7 @@ export default function VoiceAgent() {
             onChange={(e) => setQuestion(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask about flight briefings, weather, NOTAMs..."
+            disabled={!connected}
             className="flex-1"
           />
           
@@ -367,7 +361,7 @@ export default function VoiceAgent() {
           {/* Ask Button */}
           <Button 
             onClick={handleAskDocs}
-            disabled={!question.trim()}
+            disabled={!connected || !question.trim()}
             size="icon"
             className="h-10 w-10"
           >
