@@ -24,25 +24,15 @@ serve(async (req) => {
     }
 
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    const BRIEFING_VECTOR_STORE_ID = Deno.env.get('OPENAI_BRIEFING_VECTOR_STORE_ID');
 
     console.log('Available env variables:', {
-      hasOpenAI: !!OPENAI_API_KEY,
-      hasBriefingVectorStore: !!BRIEFING_VECTOR_STORE_ID,
-      briefingVectorStoreId: BRIEFING_VECTOR_STORE_ID
+      hasOpenAI: !!OPENAI_API_KEY
     });
 
     if (!OPENAI_API_KEY) {
       console.error('OpenAI API key not found in environment');
       throw new Error('OpenAI API key not configured');
     }
-
-    if (!BRIEFING_VECTOR_STORE_ID) {
-      console.error('Briefing vector store ID not configured');
-      throw new Error('Briefing vector store ID not configured');
-    }
-
-    console.log('Using briefing vector store:', BRIEFING_VECTOR_STORE_ID);
 
     // Simple authentication check - just verify we have a valid authorization header
     const authHeader = req.headers.get('Authorization');
