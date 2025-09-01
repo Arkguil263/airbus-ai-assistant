@@ -59,7 +59,7 @@ const VoiceAnimation = ({ isVisible, aircraftModel = 'A320' }: VoiceAnimationPro
         <div className="mt-6 px-6 py-3 bg-card/90 backdrop-blur-sm rounded-full border border-border/50 animate-fade-in">
           <p className="text-sm font-medium text-foreground flex items-center space-x-2">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span>{aircraftModel} AI is speaking...</span>
+            <span>{aircraftModel === "Briefing" ? "Briefing AI" : `${aircraftModel} AI`} is speaking...</span>
           </p>
         </div>
       </div>
