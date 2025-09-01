@@ -177,10 +177,25 @@ export const useMultiChat = () => {
     }
     
     // Use provided conversationId or fallback to state
-    const targetConversationId = conversationId || aircraftStates[aircraftModel].currentConversation;
+    let targetConversationId = conversationId || aircraftStates[aircraftModel].currentConversation;
+    
+    // If no conversation exists, create one
     if (!targetConversationId) {
-      console.error('❌ No conversation ID available in sendMessage');
-      return;
+      console.log('🆕 Creating new conversation for sendMessage...');
+      const title = generateConversationTitle(aircraftModel);
+      targetConversationId = await createConversation(title, aircraftModel);
+      
+      if (!targetConversationId) {
+        console.error('❌ Failed to create conversation in sendMessage');
+        throw new Error('Failed to create conversation');
+      }
+      
+      // Update the current conversation in state
+      updateAircraftState(aircraftModel, {
+        currentConversation: targetConversationId
+      });
+      
+      console.log('✅ New conversation created and set:', targetConversationId);
     }
 
     console.log('📡 Sending to conversation:', targetConversationId);
