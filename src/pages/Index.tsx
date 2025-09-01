@@ -319,21 +319,26 @@ const Index = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      disabled
-                      className={`w-full ${
+                      onClick={() => {
+                        if (user) {
+                          autoFetchBriefing(user.id);
+                        }
+                      }}
+                      disabled={briefingLoading}
+                      className={`w-full transition-colors ${
                         briefingCompleted 
-                          ? 'bg-green-50 border-green-200 text-green-700' 
-                          : 'bg-gray-50 border-gray-200 text-gray-500'
+                          ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' 
+                          : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
                       }`}
                     >
                       <CheckCircle className={`h-4 w-4 mr-2 ${
                         briefingCompleted ? 'text-green-500' : 'text-gray-400'
                       }`} />
                       {briefingCompleted 
-                        ? 'Flight briefing data cached' 
+                        ? 'Flight briefing cached - Click to refresh' 
                         : briefingLoading 
                           ? 'Loading flight briefing...' 
-                          : 'Flight briefing pending'
+                          : 'Click to fetch flight briefing'
                       }
                     </Button>
                   </div>
