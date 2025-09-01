@@ -206,7 +206,16 @@ export default function VoiceAgent() {
 
       const answer = data?.answer || 'No answer found in briefing documentation.';
 
-      // 2) Tell Realtime model to SPEAK this text
+      // Add the assistant's response to the conversation
+      const assistantMessage = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant' as const,
+        content: answer,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // 2) If voice connection is active, also tell Realtime model to SPEAK this text
       if (dcRef.current && dcRef.current.readyState === 'open') {
         const payload = {
           type: "conversation.item.create",
@@ -228,8 +237,6 @@ export default function VoiceAgent() {
         dcRef.current.send(JSON.stringify({
           type: "response.create"
         }));
-      } else {
-        console.log('Data channel not ready');
       }
 
     } catch (error) {
