@@ -230,7 +230,7 @@ const Index = () => {
               <TabsTrigger value="A320" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A320</TabsTrigger>
               <TabsTrigger value="A330" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A330</TabsTrigger>
               <TabsTrigger value="A350" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A350</TabsTrigger>
-              <TabsTrigger value="Voice" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">Voice</TabsTrigger>
+              <TabsTrigger value="Voice" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">Briefing</TabsTrigger>
             </TabsList>
             
             <div className="flex-1 mx-2 sm:mx-4 mb-4">
