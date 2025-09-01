@@ -106,22 +106,6 @@ const VoiceEnabledMessageInput = ({
       audio.autoplay = true;
       remoteAudioRef.current = audio;
       
-      // Listen to audio events for accurate speaking state
-      audio.onplay = () => {
-        console.log('Audio started playing');
-        onSpeakingChange?.(true);
-      };
-      
-      audio.onended = () => {
-        console.log('Audio finished playing');
-        onSpeakingChange?.(false);
-      };
-      
-      audio.onpause = () => {
-        console.log('Audio paused');
-        onSpeakingChange?.(false);
-      };
-      
       pc.ontrack = (e) => {
         audio.srcObject = e.streams[0];
       };
@@ -164,8 +148,16 @@ const VoiceEnabledMessageInput = ({
                 handleVectorSearch(event.transcript);
               }
             }
-           }
-           // Note: Speaking state now controlled by actual audio events above
+          } else if (event.type === 'response.audio.delta') {
+            // AI is speaking
+            onSpeakingChange?.(true);
+          } else if (event.type === 'response.created') {
+            // Response started
+            onSpeakingChange?.(true);
+          } else if (event.type === 'response.done') {
+            // Response completed
+            onSpeakingChange?.(false);
+          }
         } catch (error) {
           console.error('Error parsing WebRTC event:', error);
         }
