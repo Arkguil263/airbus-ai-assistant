@@ -47,7 +47,7 @@ export default function VoiceAgent() {
         throw new Error(error?.message || 'Failed to mint ephemeral key');
       }
 
-      const clientSecret = data.client_secret;
+      const clientSecret = data.client_secret.value;
 
       // 2) Set up WebRTC
       const pc = new RTCPeerConnection();
