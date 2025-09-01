@@ -314,6 +314,30 @@ const Index = () => {
 
               <TabsContent value="Briefing" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
+                  {/* Briefing Status Button */}
+                  <div className="p-4 border-b">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      disabled
+                      className={`w-full ${
+                        briefingCompleted 
+                          ? 'bg-green-50 border-green-200 text-green-700' 
+                          : 'bg-gray-50 border-gray-200 text-gray-500'
+                      }`}
+                    >
+                      <CheckCircle className={`h-4 w-4 mr-2 ${
+                        briefingCompleted ? 'text-green-500' : 'text-gray-400'
+                      }`} />
+                      {briefingCompleted 
+                        ? 'Flight briefing data cached' 
+                        : briefingLoading 
+                          ? 'Loading flight briefing...' 
+                          : 'Flight briefing pending'
+                      }
+                    </Button>
+                  </div>
+                  
                   <MessageList messages={aircraftStates.Briefing.messages} isLoading={aircraftStates.Briefing.isLoading} aircraftModel="Briefing" />
                   <VoiceEnabledMessageInput 
                     onSendMessage={(message) => {
