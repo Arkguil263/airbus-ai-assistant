@@ -32,6 +32,7 @@ export const useBriefingCache = () => {
 
   // Auto-fetch briefing when user logs in
   const autoFetchBriefing = async (userId: string) => {
+    // First check if we already have valid cache
     if (checkCacheStatus()) {
       console.log('Briefing already cached and valid');
       return;
@@ -41,7 +42,8 @@ export const useBriefingCache = () => {
     try {
       console.log('Auto-fetching briefing for user:', userId);
       
-      const response = await supabase.functions.invoke('briefing-assistant', {
+      // Use unified-chat instead of briefing-assistant for consistency
+      const response = await supabase.functions.invoke('unified-chat', {
         body: {
           question: "tell me about my flight plan",
           aircraftModel: "Briefing"
@@ -65,6 +67,7 @@ export const useBriefingCache = () => {
 
     } catch (error) {
       console.error('❌ Error auto-fetching briefing:', error);
+      // Don't set error state - just silently fail and let user trigger manually
     } finally {
       setIsLoading(false);
     }
