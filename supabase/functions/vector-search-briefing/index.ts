@@ -104,7 +104,7 @@ serve(async (req) => {
       throw new Error(`Failed to add message: ${errorText}`);
     }
 
-    // Step 3: Create a run with a specialized briefing assistant
+    // Step 3: Create a run using the thread's vector store access
     console.log('Creating run for briefing vector search...');
     const runResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
       method: 'POST',
@@ -114,9 +114,8 @@ serve(async (req) => {
         'OpenAI-Beta': 'assistants=v2'
       },
       body: JSON.stringify({
-        assistant_id: null,
         model: 'gpt-4.1-2025-04-14',
-        instructions: `You are an expert aviation briefing assistant specialized in flight operations, weather analysis, NOTAMs, and flight planning documentation. Use the vector store to find relevant information and provide accurate, detailed briefings about:
+        instructions: `You are an expert aviation briefing assistant specialized in flight operations, weather analysis, NOTAMs, and flight planning documentation. Use the attached vector store to find relevant information and provide accurate, detailed briefings about:
 
 - Flight planning and route analysis
 - Weather conditions and forecasts
