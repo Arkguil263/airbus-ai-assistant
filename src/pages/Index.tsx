@@ -222,7 +222,7 @@ const Index = () => {
         <div className="flex-1 flex flex-col">
           <Tabs value={activeTab} onValueChange={(value) => {
             setActiveTab(value);
-            if (value === 'A320' || value === 'A330' || value === 'A350') {
+            if (value === 'A320' || value === 'A330' || value === 'A350' || value === 'Briefing') {
               switchAircraftModel(value);
             }
           }} className="h-full flex flex-col">
@@ -230,7 +230,7 @@ const Index = () => {
               <TabsTrigger value="A320" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A320</TabsTrigger>
               <TabsTrigger value="A330" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A330</TabsTrigger>
               <TabsTrigger value="A350" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A350</TabsTrigger>
-              <TabsTrigger value="Voice" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">Briefing</TabsTrigger>
+              <TabsTrigger value="Briefing" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">Briefing</TabsTrigger>
             </TabsList>
             
             <div className="flex-1 mx-2 sm:mx-4 mb-4">
@@ -291,9 +291,22 @@ const Index = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="Voice" className="h-full m-0">
+              <TabsContent value="Briefing" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
-                  <VoiceAgent />
+                  <MessageList messages={aircraftStates.Briefing.messages} isLoading={aircraftStates.Briefing.isLoading} aircraftModel="Briefing" />
+                  <VoiceEnabledMessageInput 
+                    onSendMessage={(message) => {
+                      handleSendMessage(message);
+                    }}
+                    onVoiceMessage={(voiceMessage) => {
+                      handleVoiceMessage(voiceMessage);
+                    }}
+                    onSpeakingChange={setIsVoiceSpeaking}
+                    isLoading={aircraftStates.Briefing.isLoading}
+                    placeholder="Ask about flight briefings, weather, NOTAMs..."
+                    aircraftModel="Briefing"
+                    assistantId="Briefing-assistant"
+                  />
                 </div>
               </TabsContent>
             </div>

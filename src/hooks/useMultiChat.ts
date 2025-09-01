@@ -43,6 +43,7 @@ export const useMultiChat = () => {
     A320: { ...initialAircraftState },
     A330: { ...initialAircraftState },
     A350: { ...initialAircraftState },
+    Briefing: { ...initialAircraftState },
   });
 
   // Get current aircraft state
@@ -359,11 +360,13 @@ export const useMultiChat = () => {
       loadConversations('A320');
       loadConversations('A330');
       loadConversations('A350');
+      loadConversations('Briefing');
     } else {
       setAircraftStates({
         A320: { ...initialAircraftState },
         A330: { ...initialAircraftState },
         A350: { ...initialAircraftState },
+        Briefing: { ...initialAircraftState },
       });
     }
   }, [user]);
