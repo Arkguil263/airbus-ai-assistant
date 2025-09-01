@@ -113,10 +113,10 @@ serve(async (req) => {
       const run = await runResp.json();
       console.log("Run started:", run.id);
 
-      // Poll for completion with shorter interval and timeout
+      // Poll for completion with longer timeout for complex briefing analysis
       let runStatus = run;
       let pollCount = 0;
-      const maxPolls = 30; // 30 seconds timeout
+      const maxPolls = 60; // 60 seconds timeout for briefing analysis
       
       while ((runStatus.status === "queued" || runStatus.status === "in_progress") && pollCount < maxPolls) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -142,7 +142,7 @@ serve(async (req) => {
       }
 
       if (pollCount >= maxPolls) {
-        throw new Error("Assistant run timed out after 30 seconds");
+        throw new Error("Assistant run timed out after 60 seconds");
       }
 
       if (runStatus.status !== "completed") {
