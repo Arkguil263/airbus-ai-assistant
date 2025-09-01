@@ -195,8 +195,8 @@ export default function VoiceAgent() {
     if (!questionText.trim()) return;
 
     try {
-      // 1) Get grounded answer from vector store via backend
-      const { data, error } = await supabase.functions.invoke('ask-docs', {
+      // 1) Get grounded answer from briefing vector store via backend
+      const { data, error } = await supabase.functions.invoke('vector-search-briefing', {
         body: { question: questionText }
       });
 
@@ -204,7 +204,7 @@ export default function VoiceAgent() {
         throw new Error(error.message);
       }
 
-      const answer = data?.answer || 'No answer found.';
+      const answer = data?.answer || 'No answer found in briefing documentation.';
 
       // 2) Tell Realtime model to SPEAK this text
       if (dcRef.current && dcRef.current.readyState === 'open') {
@@ -233,9 +233,9 @@ export default function VoiceAgent() {
       }
 
     } catch (error) {
-      console.error('Ask docs error:', error);
+      console.error('Briefing search error:', error);
       toast({
-        title: "Search Failed",
+        title: "Briefing Search Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -331,7 +331,7 @@ export default function VoiceAgent() {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask about aircraft documentation..."
+            placeholder="Ask about flight briefings, weather, NOTAMs..."
             disabled={!connected}
             className="flex-1"
           />
