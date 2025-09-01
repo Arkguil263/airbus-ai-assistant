@@ -210,30 +210,31 @@ export const useMultiChat = () => {
 
       console.log('📡 Calling edge function...');
       
-      // For A320, use ask-rag instead of chat-assistant
+      // Use aircraft-specific vector search functions
       let response;
       if (aircraftModel === 'A320') {
-        console.log('📡 Using ask-rag for A320...');
-        
-        // Get the A320 vector store ID
-        const vectorStoreId = 'vs_68b26a9a7c908191b3c0312dce435605'; // A320 vector store ID
-        
-        response = await supabase.functions.invoke('ask-rag', {
+        console.log('📡 Using vector-search for A320...');
+        response = await supabase.functions.invoke('vector-search', {
           body: { 
-            query: content,
-            vector_store_id: vectorStoreId,
-            max_results: 8
+            question: content
+          }
+        });
+      } else if (aircraftModel === 'A330') {
+        console.log('📡 Using vector-search-a330 for A330...');
+        response = await supabase.functions.invoke('vector-search-a330', {
+          body: {
+            question: content
+          }
+        });
+      } else if (aircraftModel === 'A350') {
+        console.log('📡 Using vector-search-a350 for A350...');
+        response = await supabase.functions.invoke('vector-search-a350', {
+          body: {
+            question: content
           }
         });
       } else {
-        console.log('📡 Using chat-assistant for', aircraftModel);
-        response = await supabase.functions.invoke('chat-assistant', {
-          body: {
-            message: content,
-            conversationId: targetConversationId,
-            aircraftModel: aircraftModel
-          }
-        });
+        throw new Error(`Unsupported aircraft model: ${aircraftModel}`);
       }
 
       console.log('📡 Edge function response:', response);
@@ -243,22 +244,12 @@ export const useMultiChat = () => {
         throw response.error;
       }
 
-      // Handle different response formats
-      let aiResponse;
-      if (aircraftModel === 'A320') {
-        // Handle ask-rag response format
-        if (!response.data?.ok) {
-          console.error('RAG API error:', response.data);
-          throw new Error(response.data?.error || `RAG failed with status ${response.data?.status}`);
-        }
-        aiResponse = response.data?.output_text;
-      } else {
-        aiResponse = response.data?.response;
-      }
+      // Handle vector search response format (consistent across all aircraft models)
+      let aiResponse = response.data?.answer;
 
       if (!response.data || !aiResponse) {
-        console.error('❌ No response data from edge function:', response.data);
-        throw new Error('No response received from AI assistant');
+        console.error('❌ No answer in response data:', response.data);
+        throw new Error('No answer received from AI assistant');
       }
 
       console.log('✅ Received AI response:', aiResponse);
