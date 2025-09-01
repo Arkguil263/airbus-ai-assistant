@@ -29,7 +29,8 @@ serve(async (req) => {
     console.log('Available env variables:', {
       hasOpenAI: !!OPENAI_API_KEY,
       hasBriefingVectorStore: !!BRIEFING_VECTOR_STORE_ID,
-      briefingVectorStoreId: BRIEFING_VECTOR_STORE_ID
+      briefingVectorStoreId: BRIEFING_VECTOR_STORE_ID,
+      allEnvKeys: Object.keys(Deno.env.toObject()).filter(key => key.includes('OPENAI'))
     });
 
     if (!OPENAI_API_KEY) {
@@ -39,7 +40,54 @@ serve(async (req) => {
 
     if (!BRIEFING_VECTOR_STORE_ID) {
       console.error('Briefing vector store ID not configured');
-      throw new Error('Briefing vector store ID not configured');
+      console.log('Available environment variables:', Object.keys(Deno.env.toObject()));
+      
+      // Fallback to regular chat completion without vector search
+      console.log('Falling back to regular chat completion...');
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1-2025-04-14',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert aviation briefing assistant specialized in flight operations, weather analysis, NOTAMs, and flight planning documentation. Provide accurate, detailed briefings about flight planning, weather conditions, NOTAMs, airspace restrictions, and flight safety considerations.'
+            },
+            {
+              role: 'user',
+              content: question
+            }
+          ],
+          max_completion_tokens: 1000
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('OpenAI API error:', errorText);
+        throw new Error(`OpenAI API error: ${errorText}`);
+      }
+
+      const data = await response.json();
+      const answer = data.choices[0]?.message?.content;
+
+      if (!answer) {
+        console.error('No answer in OpenAI response:', data);
+        throw new Error('No answer received from OpenAI');
+      }
+
+      console.log('✅ Successfully received fallback answer from OpenAI');
+
+      return new Response(JSON.stringify({ 
+        answer: answer + '\n\n*Note: Currently using general aviation knowledge. Vector store connection is being configured.*',
+        type: 'briefing_fallback'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Using briefing vector store:', BRIEFING_VECTOR_STORE_ID);
