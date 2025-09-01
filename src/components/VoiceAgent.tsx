@@ -332,7 +332,6 @@ export default function VoiceAgent() {
             onChange={(e) => setQuestion(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask about flight briefings, weather, NOTAMs..."
-            disabled={!connected}
             className="flex-1"
           />
           
@@ -361,7 +360,7 @@ export default function VoiceAgent() {
           {/* Ask Button */}
           <Button 
             onClick={handleAskDocs}
-            disabled={!connected || !question.trim()}
+            disabled={!question.trim()}
             size="icon"
             className="h-10 w-10"
           >
