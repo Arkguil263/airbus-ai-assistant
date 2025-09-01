@@ -384,7 +384,7 @@ const Index = () => {
                     }}
                     onSpeakingChange={setIsVoiceSpeaking}
                     isLoading={aircraftStates.Briefing.isLoading}
-                    placeholder="Ask about flight briefings, weather, NOTAMs..."
+                    placeholder="Ask about today's briefing package"
                     aircraftModel="Briefing"
                     assistantId="Briefing-assistant"
                   />
