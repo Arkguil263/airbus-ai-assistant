@@ -94,6 +94,31 @@ const VoiceEnabledMessageInput = ({
           You have access to A350 manuals and technical documentation. 
           Keep replies concise and friendly. Focus on A350-specific systems, procedures, and operations.
           You specialize in next-generation wide-body aircraft with advanced avionics.`;
+      } else if (aircraftModel === 'Briefing') {
+        // Read cached briefing data from localStorage
+        const cachedData = localStorage.getItem('briefing_cache');
+        let briefingContext = '';
+        
+        if (cachedData) {
+          try {
+            const briefingCache = JSON.parse(cachedData);
+            const isValid = Date.now() - briefingCache.timestamp < (24 * 60 * 60 * 1000); // 24 hours
+            
+            if (isValid && briefingCache.flightPlan && briefingCache.notamAnalysis) {
+              // Combine and compress the cached data (keep under 6000 chars for efficiency)
+              const combinedData = `${briefingCache.flightPlan}\n\n=== NOTAM ANALYSIS ===\n\n${briefingCache.notamAnalysis}`;
+              briefingContext = combinedData.slice(0, 6000);
+            }
+          } catch (error) {
+            console.error('Error reading cached briefing data:', error);
+          }
+        }
+        
+        instructions = `You are a helpful voice agent for flight briefing assistance. 
+          You have access to cached flight briefing data and can answer questions about flight plans, NOTAMs, and operational details.
+          Keep replies concise and friendly. Focus on the specific briefing information provided.
+          
+          ${briefingContext ? `\n\nCached briefing context (user-provided):\n${briefingContext}` : '\n\nNo cached briefing data available. Ask the user to load briefing data first.'}`;
       } else {
         instructions = `You are a helpful voice agent for ${aircraftModel} aircraft documentation. 
           You have access to ${aircraftModel} manuals and technical documentation. 
@@ -220,6 +245,37 @@ const VoiceEnabledMessageInput = ({
       // Send initial greeting trigger after connection is established
       setTimeout(() => {
         if (dcRef.current?.readyState === 'open') {
+          // For Briefing model, inject cached data into conversation if available
+          if (aircraftModel === 'Briefing') {
+            const cachedData = localStorage.getItem('briefing_cache');
+            if (cachedData) {
+              try {
+                const briefingCache = JSON.parse(cachedData);
+                const isValid = Date.now() - briefingCache.timestamp < (24 * 60 * 60 * 1000);
+                
+                if (isValid && briefingCache.flightPlan && briefingCache.notamAnalysis) {
+                  // Add cached data as a user message in the conversation
+                  const cachedDataEvent = {
+                    type: 'conversation.item.create',
+                    item: {
+                      type: 'message',
+                      role: 'user',
+                      content: [
+                        {
+                          type: 'input_text',
+                          text: `Here is my cached briefing data:\n\n${briefingCache.flightPlan}\n\n=== NOTAM ANALYSIS ===\n\n${briefingCache.notamAnalysis}`
+                        }
+                      ]
+                    }
+                  };
+                  dcRef.current.send(JSON.stringify(cachedDataEvent));
+                }
+              } catch (error) {
+                console.error('Error sending cached briefing data:', error);
+              }
+            }
+          }
+          
           const greetingEvent = {
             type: 'conversation.item.create',
             item: {
