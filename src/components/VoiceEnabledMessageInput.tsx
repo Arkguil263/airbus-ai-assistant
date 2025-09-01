@@ -136,15 +136,18 @@ const VoiceEnabledMessageInput = ({
             if (event.transcript && event.transcript.trim()) {
               console.log('User speech transcribed:', event.transcript);
               
-              // Add user message to main chat
-              onVoiceMessage?.({ 
-                role: 'user', 
-                content: event.transcript, 
-                isVoice: true 
-              });
-              
-              // Call vector search function instead of regular chat
-              handleVectorSearch(event.transcript);
+              // Skip vector search for initial greeting to prevent double response
+              if (event.transcript.toLowerCase() !== 'hello') {
+                // Add user message to main chat
+                onVoiceMessage?.({ 
+                  role: 'user', 
+                  content: event.transcript, 
+                  isVoice: true 
+                });
+                
+                // Call vector search function instead of regular chat
+                handleVectorSearch(event.transcript);
+              }
             }
           } else if (event.type === 'response.audio.delta') {
             // AI is speaking
