@@ -216,21 +216,24 @@ export const useMultiChat = () => {
         console.log('📡 Using vector-search for A320...');
         response = await supabase.functions.invoke('vector-search', {
           body: { 
-            question: content
+            question: content,
+            aircraftModel: 'A320'
           }
         });
       } else if (aircraftModel === 'A330') {
         console.log('📡 Using vector-search-a330 for A330...');
         response = await supabase.functions.invoke('vector-search-a330', {
           body: {
-            question: content
+            question: content,
+            aircraftModel: 'A330'
           }
         });
       } else if (aircraftModel === 'A350') {
         console.log('📡 Using vector-search-a350 for A350...');
         response = await supabase.functions.invoke('vector-search-a350', {
           body: {
-            question: content
+            question: content,
+            aircraftModel: 'A350'
           }
         });
       } else {
