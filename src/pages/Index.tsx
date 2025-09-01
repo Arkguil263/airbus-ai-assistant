@@ -12,6 +12,7 @@ import MessageList from '@/components/MessageList';
 import EnhancedMessageInput from '@/components/EnhancedMessageInput';
 import VoiceEnabledMessageInput from '@/components/VoiceEnabledMessageInput';
 import VoiceAgent from '@/components/VoiceAgent';
+import VoiceAnimation from '@/components/VoiceAnimation';
 
 
 const Index = () => {
@@ -20,6 +21,7 @@ const Index = () => {
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('A320');
+  const [isVoiceSpeaking, setIsVoiceSpeaking] = useState(false);
   
   const {
     currentAircraftModel,
@@ -242,6 +244,7 @@ const Index = () => {
                     onVoiceMessage={(voiceMessage) => {
                       handleVoiceMessage(voiceMessage);
                     }}
+                    onSpeakingChange={setIsVoiceSpeaking}
                     isLoading={aircraftStates.A320.isLoading}
                     placeholder="Ask me a question"
                     aircraftModel="A320"
@@ -260,6 +263,7 @@ const Index = () => {
                     onVoiceMessage={(voiceMessage) => {
                       handleVoiceMessage(voiceMessage);
                     }}
+                    onSpeakingChange={setIsVoiceSpeaking}
                     isLoading={aircraftStates.A330.isLoading}
                     placeholder="Ask me a question"
                     aircraftModel="A330"
@@ -278,6 +282,7 @@ const Index = () => {
                     onVoiceMessage={(voiceMessage) => {
                       handleVoiceMessage(voiceMessage);
                     }}
+                    onSpeakingChange={setIsVoiceSpeaking}
                     isLoading={aircraftStates.A350.isLoading}
                     placeholder="Ask me a question"
                     aircraftModel="A350"
@@ -295,6 +300,12 @@ const Index = () => {
           </Tabs>
         </div>
       </div>
+
+      {/* Voice Animation Overlay */}
+      <VoiceAnimation 
+        isVisible={isVoiceSpeaking} 
+        aircraftModel={activeTab.includes('A3') ? activeTab : 'AI'} 
+      />
     </div>
   );
 };

@@ -14,6 +14,7 @@ interface VoiceEnabledMessageInputProps {
   aircraftModel: string;
   assistantId?: string;
   onVoiceMessage?: (message: { role: 'user' | 'assistant'; content: string; isVoice?: boolean }) => void;
+  onSpeakingChange?: (isSpeaking: boolean) => void;
 }
 
 interface TranscriptMessage {
@@ -30,7 +31,8 @@ const VoiceEnabledMessageInput = ({
   placeholder,
   aircraftModel,
   assistantId,
-  onVoiceMessage 
+  onVoiceMessage,
+  onSpeakingChange 
 }: VoiceEnabledMessageInputProps) => {
   const [message, setMessage] = useState('');
   const [voiceConnected, setVoiceConnected] = useState(false);
@@ -126,6 +128,8 @@ const VoiceEnabledMessageInput = ({
                 content: event.transcript, 
                 isVoice: true 
               });
+              // Stop speaking indicator
+              onSpeakingChange?.(false);
             }
           } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
             // Handle user speech transcription - add to main chat and send to vector search
@@ -142,6 +146,15 @@ const VoiceEnabledMessageInput = ({
               // Call vector search function instead of regular chat
               handleVectorSearch(event.transcript);
             }
+          } else if (event.type === 'response.audio.delta') {
+            // AI is speaking
+            onSpeakingChange?.(true);
+          } else if (event.type === 'response.created') {
+            // Response started
+            onSpeakingChange?.(true);
+          } else if (event.type === 'response.done') {
+            // Response completed
+            onSpeakingChange?.(false);
           }
         } catch (error) {
           console.error('Error parsing WebRTC event:', error);
