@@ -78,10 +78,28 @@ const VoiceEnabledMessageInput = ({
     setConnecting(true);
 
     try {
-      // Create voice instructions that include aircraft model context
-      const instructions = `You are a helpful voice agent for ${aircraftModel} aircraft documentation. 
-        You have access to ${aircraftModel} manuals and technical documentation. 
-        Keep replies concise and friendly. Focus on ${aircraftModel}-specific information when answering questions.`;
+      // Create aircraft-specific voice instructions
+      let instructions;
+      if (aircraftModel === 'A320') {
+        instructions = `You are a helpful voice agent for A320 aircraft documentation. 
+          You have access to A320 manuals and technical documentation. 
+          Keep replies concise and friendly. Focus on A320-specific systems, procedures, and operations.
+          You specialize in narrow-body commercial aircraft operations.`;
+      } else if (aircraftModel === 'A330') {
+        instructions = `You are a helpful voice agent for A330 aircraft documentation. 
+          You have access to A330 manuals and technical documentation. 
+          Keep replies concise and friendly. Focus on A330-specific systems, procedures, and operations.
+          You specialize in wide-body long-haul aircraft operations.`;
+      } else if (aircraftModel === 'A350') {
+        instructions = `You are a helpful voice agent for A350 aircraft documentation. 
+          You have access to A350 manuals and technical documentation. 
+          Keep replies concise and friendly. Focus on A350-specific systems, procedures, and operations.
+          You specialize in next-generation wide-body aircraft with advanced avionics.`;
+      } else {
+        instructions = `You are a helpful voice agent for ${aircraftModel} aircraft documentation. 
+          You have access to ${aircraftModel} manuals and technical documentation. 
+          Keep replies concise and friendly. Focus on ${aircraftModel}-specific information when answering questions.`;
+      }
         
       // Use aircraft-specific realtime session endpoint
       const sessionEndpoint = aircraftModel === 'A330' ? 'realtime-session-a330' : 
