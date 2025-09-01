@@ -436,7 +436,7 @@ const VoiceEnabledMessageInput = ({
             onKeyDown={handleKeyDown}
             placeholder={placeholder || (disabled ? "Select a conversation to start chatting" : `Message ${aircraftModel} AI...`)}
             disabled={disabled || isLoading}
-            className={`min-h-[40px] max-h-[120px] resize-none overflow-y-hidden py-3 leading-6 bg-background border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${aircraftModel === 'Briefing' ? 'text-sm' : 'text-base'}`}
+            className={`max-h-[120px] resize-none overflow-y-hidden py-3 leading-6 bg-background border-input focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${aircraftModel === 'Briefing' ? 'text-sm min-h-[32px]' : 'text-base min-h-[40px]'}`}
             rows={1}
           />
         </div>
