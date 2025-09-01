@@ -114,6 +114,7 @@ serve(async (req) => {
         'OpenAI-Beta': 'assistants=v2'
       },
       body: JSON.stringify({
+        assistant_id: null,
         model: 'gpt-4.1-2025-04-14',
         instructions: `You are an expert aviation briefing assistant specialized in flight operations, weather analysis, NOTAMs, and flight planning documentation. Use the vector store to find relevant information and provide accurate, detailed briefings about:
 
@@ -129,7 +130,8 @@ Always provide comprehensive, professional briefings with specific details from 
           {
             type: 'file_search'
           }
-        ]
+        ],
+        max_completion_tokens: 4000
       })
     });
 
