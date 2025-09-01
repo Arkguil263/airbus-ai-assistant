@@ -113,10 +113,16 @@ serve(async (req) => {
       const run = await runResp.json();
       console.log("Run started:", run.id);
 
-      // Poll for completion
+      // Poll for completion with shorter interval and timeout
       let runStatus = run;
-      while (runStatus.status === "queued" || runStatus.status === "in_progress") {
+      let pollCount = 0;
+      const maxPolls = 30; // 30 seconds timeout
+      
+      while ((runStatus.status === "queued" || runStatus.status === "in_progress") && pollCount < maxPolls) {
         await new Promise(resolve => setTimeout(resolve, 1000));
+        pollCount++;
+        
+        console.log(`Polling run status... (${pollCount}/${maxPolls})`);
         
         const statusResp = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
           headers: {
@@ -133,6 +139,10 @@ serve(async (req) => {
 
         runStatus = await statusResp.json();
         console.log("Run status:", runStatus.status);
+      }
+
+      if (pollCount >= maxPolls) {
+        throw new Error("Assistant run timed out after 30 seconds");
       }
 
       if (runStatus.status !== "completed") {
