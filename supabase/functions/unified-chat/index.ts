@@ -42,28 +42,41 @@ serve(async (req) => {
 
     let answer;
 
-    // Use vector search for Briefing aircraft model
+    // Use assistant-driven briefing for Briefing aircraft model
     if (aircraftModel === 'Briefing') {
-      console.log('Using vector search for Briefing questions...');
+      console.log('Using assistant-driven briefing for questions...');
       
-      const vectorSearchResponse = await fetch('https://hlalijpmqogytkwljppc.supabase.co/functions/v1/vector-search-briefing', {
+      const briefingResponse = await fetch('https://hlalijpmqogytkwljppc.supabase.co/functions/v1/briefing-assistant', {
         method: 'POST',
         headers: {
           'Authorization': authHeader,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ question })
+        body: JSON.stringify({ 
+          question,
+          aircraftModel 
+        })
       });
 
-      if (!vectorSearchResponse.ok) {
-        const errorText = await vectorSearchResponse.text();
-        console.error('Vector search error:', errorText);
-        throw new Error(`Vector search failed: ${errorText}`);
+      if (!briefingResponse.ok) {
+        const errorText = await briefingResponse.text();
+        console.error('Briefing assistant error:', errorText);
+        throw new Error(`Briefing assistant failed: ${errorText}`);
       }
 
-      const vectorData = await vectorSearchResponse.json();
-      answer = vectorData.answer;
-      console.log('✅ Successfully received answer from vector search');
+      const briefingData = await briefingResponse.json();
+      answer = briefingData.answer;
+      
+      console.log('✅ Successfully received answer from briefing assistant');
+      
+      return new Response(JSON.stringify({ 
+        answer: answer,
+        citations: briefingData.citations || [],
+        aircraftModel: aircraftModel,
+        type: briefingData.type || 'assistant_with_rag'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     } else {
       // Use simple chat completion for other aircraft models
       console.log('Making OpenAI chat completion request...');
