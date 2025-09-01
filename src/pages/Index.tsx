@@ -29,7 +29,8 @@ const Index = () => {
     isLoading: briefingLoading, 
     isCompleted: briefingCompleted, 
     autoFetchBriefing,
-    getCachedBriefing
+    getCachedBriefing,
+    clearCache
   } = useBriefingCache();
   
   const {
@@ -321,6 +322,8 @@ const Index = () => {
                       size="sm"
                       onClick={() => {
                         if (user) {
+                          // Clear cache first, then fetch fresh data
+                          clearCache();
                           autoFetchBriefing(user.id);
                         }
                       }}
