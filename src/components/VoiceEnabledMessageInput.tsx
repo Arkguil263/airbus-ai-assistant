@@ -81,10 +81,9 @@ const VoiceEnabledMessageInput = ({
       // Create aircraft-specific voice instructions
       let instructions;
       if (aircraftModel === 'A320') {
-        instructions = `You are a helpful voice agent for A320 aircraft documentation. 
-          You have access to A320 manuals and technical documentation. 
-          Keep replies concise and friendly. Focus on A320-specific systems, procedures, and operations.
-          You specialize in narrow-body commercial aircraft operations.`;
+        instructions = `You are a helpful voice agent for Tiger Airways aircraft documentation. 
+          You have access to Tiger Airways manuals and technical documentation. 
+          Keep replies concise and friendly. Focus on getting detail systems information, operating procedures, and Tiger Airways operations`;
       } else if (aircraftModel === 'A330') {
         instructions = `You are a helpful voice agent for A330 aircraft documentation. 
           You have access to A330 manuals and technical documentation. 
