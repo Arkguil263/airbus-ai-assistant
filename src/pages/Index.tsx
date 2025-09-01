@@ -316,7 +316,7 @@ const Index = () => {
               <TabsContent value="Briefing" className="h-full m-0">
                 <div className="border rounded-lg flex flex-col bg-card h-full">
                   {/* Briefing Status Button */}
-                  <div className="p-4 border-b">
+                   <div className="p-4 border-b space-y-2">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -344,6 +344,34 @@ const Index = () => {
                           : 'Click to fetch flight briefing'
                       }
                     </Button>
+                    
+                    {briefingCompleted && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          const cachedData = getCachedBriefing();
+                          if (cachedData) {
+                            // Create a message with the cached data
+                            const briefingMessage = {
+                              id: `cached-briefing-${Date.now()}`,
+                              role: 'assistant' as const,
+                              content: cachedData,
+                              created_at: new Date().toISOString(),
+                              isCachedBriefing: true
+                            };
+                            
+                            // Add to briefing messages
+                            updateAircraftState('Briefing', (prevState) => ({
+                              messages: [...prevState.messages, briefingMessage]
+                            }));
+                          }
+                        }}
+                        className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                      >
+                        Show Cached Briefing Data
+                      </Button>
+                    )}
                   </div>
                   
                   <MessageList messages={aircraftStates.Briefing.messages} isLoading={aircraftStates.Briefing.isLoading} aircraftModel="Briefing" />
