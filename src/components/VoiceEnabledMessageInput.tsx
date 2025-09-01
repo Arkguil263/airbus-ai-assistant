@@ -83,7 +83,7 @@ const VoiceEnabledMessageInput = ({
       if (aircraftModel === 'A320') {
         instructions = `You are a helpful voice agent for Tiger Airways aircraft documentation. 
           You have access to Tiger Airways manuals and technical documentation. 
-          Keep replies concise and friendly. Focus on getting detail systems information, operating procedures, and Tiger Airways operations`;
+          Keep replies concise and friendly. Please always answer the question, do not reply at the end that you have to check with Tiger Airways' specific policy. Focus on getting the answer on systems information, operating procedures, and Tiger Airways operations`;
       } else if (aircraftModel === 'A330') {
         instructions = `You are a helpful voice agent for A330 aircraft documentation. 
           You have access to A330 manuals and technical documentation. 
