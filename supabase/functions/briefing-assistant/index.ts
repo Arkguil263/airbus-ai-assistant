@@ -35,95 +35,148 @@ serve(async (req) => {
       throw new Error("Authorization header required");
     }
 
-    // Map aircraft -> vector store
-    const vecByModel: Record<string, string | undefined> = {
-      A320: Deno.env.get("OPENAI_A320_VECTOR_STORE_ID"),
-      A330: Deno.env.get("OPENAI_A330_VECTOR_STORE_ID"),
-      A350: Deno.env.get("OPENAI_A350_VECTOR_STORE_ID"),
-      Briefing: Deno.env.get("OPENAI_BRIEFING_VECTOR_STORE_ID"),
-    };
-    const fallbackVs = Deno.env.get("OPENAI_BRIEFING_VECTOR_STORE_ID");
-    const vectorStoreId = vecByModel[aircraftModel] ?? fallbackVs;
-    
-    console.log("Vector store mapping:", {
+    console.log("Using assistant ID for briefing analysis:", {
       aircraftModel,
-      vectorStoreId: vectorStoreId?.substring(0, 8) + "...",
-      hasVectorStore: !!vectorStoreId,
+      hasAssistantId: !!OPENAI_ASSISTANT_ID,
     });
 
-    if (!vectorStoreId) {
-      throw new Error(`Vector store not configured for ${aircraftModel}`);
-    }
-
-    // Helper to call /v1/responses (Assistant-driven)
-    async function runResponsesWithAssistant({
+    // Helper to use OpenAI Assistants API
+    async function runAssistant({
       assistantId,
       input,
-      vectorStoreId,
-      model = "gpt-4o-mini",
     }: {
       assistantId: string;
       input: string;
-      vectorStoreId: string;
-      model?: string;
     }) {
-      const body: any = {
-        assistant_id: assistantId,
-        model,
-        input,
-        tools: [{ type: "file_search" }],
-        tool_resources: { file_search: { vector_store_ids: [vectorStoreId] } },
-      };
-
-      console.log("Calling OpenAI /v1/responses with assistant...");
-      const resp = await fetch("https://api.openai.com/v1/responses", {
+      console.log("Creating thread...");
+      // Create a thread
+      const threadResp = await fetch("https://api.openai.com/v1/threads", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
           "Content-Type": "application/json",
+          "OpenAI-Beta": "assistants=v2",
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({}),
       });
 
-      if (!resp.ok) {
-        const errText = await resp.text();
-        console.error("OpenAI API error:", errText);
-        throw new Error(`OpenAI /responses error: ${errText}`);
+      if (!threadResp.ok) {
+        const errText = await threadResp.text();
+        console.error("Thread creation error:", errText);
+        throw new Error(`Thread creation error: ${errText}`);
       }
 
-      const data = await resp.json();
+      const thread = await threadResp.json();
+      console.log("Thread created:", thread.id);
 
-      // Unwrap text
-      const answer =
-        data.output_text ??
-        (Array.isArray(data.output)
-          ? data.output
-              .flatMap((o: any) => (Array.isArray(o.content) ? o.content : []))
-              .map((c: any) => {
-                if (typeof c === "string") return c;
-                if (c?.type === "output_text" && c?.text) return c.text;
-                if (c?.type === "text" && c?.text) return c.text;
-                return "";
-              })
-              .join("\n")
-          : "");
+      // Add message to thread
+      const messageResp = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+          "OpenAI-Beta": "assistants=v2",
+        },
+        body: JSON.stringify({
+          role: "user",
+          content: input,
+        }),
+      });
 
-      // Extract citations (best-effort)
+      if (!messageResp.ok) {
+        const errText = await messageResp.text();
+        console.error("Message creation error:", errText);
+        throw new Error(`Message creation error: ${errText}`);
+      }
+
+      console.log("Message added to thread");
+
+      // Run the assistant
+      const runResp = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+          "OpenAI-Beta": "assistants=v2",
+        },
+        body: JSON.stringify({
+          assistant_id: assistantId,
+        }),
+      });
+
+      if (!runResp.ok) {
+        const errText = await runResp.text();
+        console.error("Run creation error:", errText);
+        throw new Error(`Run creation error: ${errText}`);
+      }
+
+      const run = await runResp.json();
+      console.log("Run started:", run.id);
+
+      // Poll for completion
+      let runStatus = run;
+      while (runStatus.status === "queued" || runStatus.status === "in_progress") {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const statusResp = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+            "OpenAI-Beta": "assistants=v2",
+          },
+        });
+
+        if (!statusResp.ok) {
+          const errText = await statusResp.text();
+          console.error("Status check error:", errText);
+          throw new Error(`Status check error: ${errText}`);
+        }
+
+        runStatus = await statusResp.json();
+        console.log("Run status:", runStatus.status);
+      }
+
+      if (runStatus.status !== "completed") {
+        console.error("Run failed with status:", runStatus.status);
+        throw new Error(`Run failed with status: ${runStatus.status}`);
+      }
+
+      // Get messages
+      const messagesResp = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "OpenAI-Beta": "assistants=v2",
+        },
+      });
+
+      if (!messagesResp.ok) {
+        const errText = await messagesResp.text();
+        console.error("Messages retrieval error:", errText);
+        throw new Error(`Messages retrieval error: ${errText}`);
+      }
+
+      const messages = await messagesResp.json();
+      console.log("Messages retrieved:", messages.data.length);
+
+      // Get the assistant's response
+      const assistantMessage = messages.data.find((msg: any) => msg.role === "assistant");
+      if (!assistantMessage) {
+        throw new Error("No assistant response found");
+      }
+
+      // Extract text content
+      const textContent = assistantMessage.content.find((content: any) => content.type === "text");
+      const answer = textContent?.text?.value || "No response generated";
+
+      // Extract citations from annotations
       const citations: Array<{ file_id?: string; title?: string; url?: string }> = [];
       try {
-        const contents = Array.isArray(data.output)
-          ? data.output.flatMap((o: any) => (Array.isArray(o.content) ? o.content : []))
-          : [];
-        for (const part of contents) {
-          const anns = part?.annotations || [];
-          for (const ann of anns) {
-            if (ann?.type?.includes("file") || ann?.file_id || ann?.title) {
-              citations.push({
-                file_id: ann.file_id,
-                title: ann.title || ann.filename || ann.display_name,
-                url: ann.url,
-              });
-            }
+        const annotations = textContent?.text?.annotations || [];
+        for (const annotation of annotations) {
+          if (annotation.type === "file_citation") {
+            citations.push({
+              file_id: annotation.file_citation?.file_id,
+              title: annotation.text || "Referenced file",
+            });
           }
         }
       } catch (citationError) {
@@ -135,13 +188,12 @@ serve(async (req) => {
         citationsCount: citations.length,
       });
 
-      return { answer, citations, raw: data };
+      return { answer, citations };
     }
 
-    const { answer, citations } = await runResponsesWithAssistant({
+    const { answer, citations } = await runAssistant({
       assistantId: OPENAI_ASSISTANT_ID,
       input: question,
-      vectorStoreId,
     });
 
     return new Response(
