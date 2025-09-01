@@ -40,46 +40,72 @@ serve(async (req) => {
 
     console.log('✅ Authorization header validated successfully');
 
-    // Use a simple chat completion without vector stores for now
-    console.log('Making OpenAI chat completion request...');
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a helpful assistant for ${aircraftModel} aircraft operations and documentation. Provide accurate, professional responses about aircraft systems, procedures, and technical information for the ${aircraftModel}. If you don't have specific information about the ${aircraftModel}, clearly state that and provide general aviation guidance where appropriate.`
-          },
-          {
-            role: 'user',
-            content: question
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7
-      })
-    });
+    let answer;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${errorText}`);
+    // Use vector search for Briefing aircraft model
+    if (aircraftModel === 'Briefing') {
+      console.log('Using vector search for Briefing questions...');
+      
+      const vectorSearchResponse = await fetch('https://hlalijpmqogytkwljppc.supabase.co/functions/v1/vector-search-briefing', {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question })
+      });
+
+      if (!vectorSearchResponse.ok) {
+        const errorText = await vectorSearchResponse.text();
+        console.error('Vector search error:', errorText);
+        throw new Error(`Vector search failed: ${errorText}`);
+      }
+
+      const vectorData = await vectorSearchResponse.json();
+      answer = vectorData.answer;
+      console.log('✅ Successfully received answer from vector search');
+    } else {
+      // Use simple chat completion for other aircraft models
+      console.log('Making OpenAI chat completion request...');
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a helpful assistant for ${aircraftModel} aircraft operations and documentation. Provide accurate, professional responses about aircraft systems, procedures, and technical information for the ${aircraftModel}. If you don't have specific information about the ${aircraftModel}, clearly state that and provide general aviation guidance where appropriate.`
+            },
+            {
+              role: 'user',
+              content: question
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('OpenAI API error:', errorText);
+        throw new Error(`OpenAI API error: ${errorText}`);
+      }
+
+      const data = await response.json();
+      answer = data.choices[0]?.message?.content;
+
+      if (!answer) {
+        console.error('No answer in OpenAI response:', data);
+        throw new Error('No answer received from OpenAI');
+      }
+
+      console.log('✅ Successfully received answer from OpenAI');
     }
-
-    const data = await response.json();
-    const answer = data.choices[0]?.message?.content;
-
-    if (!answer) {
-      console.error('No answer in OpenAI response:', data);
-      throw new Error('No answer received from OpenAI');
-    }
-
-    console.log('✅ Successfully received answer from OpenAI');
 
     return new Response(JSON.stringify({ 
       answer: answer,
