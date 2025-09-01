@@ -217,14 +217,26 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("=== ERROR IN BRIEFING ASSISTANT ===");
+    console.error("Error name:", error?.name);
+    console.error("Error type:", typeof error);
     console.error("Error message:", error?.message);
     console.error("Error stack:", error?.stack);
     console.error("=== END ERROR DEBUG ===");
+    
+    const errorResponse = {
+      error: error?.message || "Unknown error occurred",
+      details: { 
+        name: error?.name, 
+        stack: error?.stack?.substring(0, 500),
+        timestamp: new Date().toISOString(),
+        type: typeof error
+      },
+    };
+    
+    console.error("Returning error response:", JSON.stringify(errorResponse));
+    
     return new Response(
-      JSON.stringify({
-        error: error?.message || "Unknown error occurred",
-        details: { name: error?.name, stack: error?.stack?.substring(0, 500) },
-      }),
+      JSON.stringify(errorResponse),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
