@@ -3,10 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Menu } from 'lucide-react';
+import { Menu, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMultiChat } from '@/hooks/useMultiChat';
 import { useToast } from '@/hooks/use-toast';
+import { useBriefingCache } from '@/hooks/useBriefingCache';
 import ConversationList from '@/components/ConversationList';
 import MessageList from '@/components/MessageList';
 import EnhancedMessageInput from '@/components/EnhancedMessageInput';
@@ -22,6 +23,14 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('A320');
   const [isVoiceSpeaking, setIsVoiceSpeaking] = useState(false);
+  
+  // Briefing cache functionality
+  const { 
+    isLoading: briefingLoading, 
+    isCompleted: briefingCompleted, 
+    autoFetchBriefing,
+    getCachedBriefing
+  } = useBriefingCache();
   
   const {
     currentAircraftModel,
@@ -45,6 +54,13 @@ const Index = () => {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  // Auto-fetch briefing when user logs in
+  useEffect(() => {
+    if (user && !loading) {
+      autoFetchBriefing(user.id);
+    }
+  }, [user, loading, autoFetchBriefing]);
 
   // Sync active tab with current aircraft model
   useEffect(() => {
@@ -230,7 +246,12 @@ const Index = () => {
               <TabsTrigger value="A320" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A320</TabsTrigger>
               <TabsTrigger value="A330" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A330</TabsTrigger>
               <TabsTrigger value="A350" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A350</TabsTrigger>
-              <TabsTrigger value="Briefing" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">Briefing</TabsTrigger>
+              <TabsTrigger value="Briefing" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3 relative">
+                Briefing
+                {briefingCompleted && (
+                  <CheckCircle className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
+                )}
+              </TabsTrigger>
             </TabsList>
             
             <div className="flex-1 mx-2 sm:mx-4 mb-4">
