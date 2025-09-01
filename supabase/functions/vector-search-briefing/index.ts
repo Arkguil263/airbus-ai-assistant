@@ -55,8 +55,8 @@ serve(async (req) => {
 
     console.log('✅ Authorization header validated successfully');
 
-    // Use chat completions API with vector store for file search
-    console.log('Creating chat completion with vector store...');
+    // Use chat completions API without file_search - simpler approach
+    console.log('Creating chat completion...');
     const chatResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -68,7 +68,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert aviation briefing assistant specialized in flight operations, weather analysis, NOTAMs, and flight planning documentation. Use the attached vector store to find relevant information and provide accurate, detailed briefings about:
+            content: `You are an expert aviation briefing assistant specialized in flight operations, weather analysis, NOTAMs, and flight planning documentation. Provide accurate, detailed briefings about:
 
 - Flight planning and route analysis
 - Weather conditions and forecasts
@@ -77,24 +77,13 @@ serve(async (req) => {
 - Flight safety and operational considerations
 - Regulatory requirements and compliance
 
-Always provide comprehensive, professional briefings with specific details from the source documents. Format your responses clearly with bullet points or sections when appropriate. Always cite source documents when possible.`
+Always provide comprehensive, professional briefings with specific details. Format your responses clearly with bullet points or sections when appropriate.`
           },
           {
             role: 'user',
             content: question
           }
         ],
-        tools: [
-          {
-            type: 'file_search'
-          }
-        ],
-        tool_choice: 'auto',
-        tool_resources: {
-          file_search: {
-            vector_store_ids: [BRIEFING_VECTOR_STORE_ID]
-          }
-        },
         max_completion_tokens: 4000
       })
     });
