@@ -44,7 +44,7 @@ serve(async (req) => {
     const json = await resp.json();
     console.log('Session created successfully');
     
-    return new Response(JSON.stringify({ client_secret: json.client_secret?.value }), {
+    return new Response(JSON.stringify(json), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
