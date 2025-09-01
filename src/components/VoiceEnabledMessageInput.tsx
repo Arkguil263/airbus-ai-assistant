@@ -128,8 +128,7 @@ const VoiceEnabledMessageInput = ({
                 content: event.transcript, 
                 isVoice: true 
               });
-              // Stop speaking indicator
-              onSpeakingChange?.(false);
+              // Note: Don't stop speaking indicator here, wait for response.done
             }
           } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
             // Handle user speech transcription - add to main chat and send to vector search
