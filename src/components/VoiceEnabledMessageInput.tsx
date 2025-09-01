@@ -315,6 +315,7 @@ const VoiceEnabledMessageInput = ({
     if (!voiceConnected) return;
     
     setVoiceConnected(false);
+    onSpeakingChange?.(false); // Reset speaking state when disconnecting
     dcRef.current?.close();
     pcRef.current?.getSenders().forEach((s) => s.track?.stop());
     pcRef.current?.close();
