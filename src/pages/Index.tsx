@@ -398,7 +398,7 @@ const Index = () => {
       {/* Voice Animation Overlay */}
       <VoiceAnimation 
         isVisible={isVoiceSpeaking} 
-        aircraftModel={activeTab.includes('A3') ? activeTab : 'AI'} 
+        aircraftModel={activeTab} 
       />
     </div>
   );
