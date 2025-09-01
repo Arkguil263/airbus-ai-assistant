@@ -59,18 +59,13 @@ export const useBriefingCache = () => {
       
       // First request: Flight plan briefing
       console.log('🚀 Making first request: Flight plan briefing');
-      const timeoutPromise1 = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('First request timeout after 45 seconds')), 45000);
-      });
-
-      const fetchPromise1 = supabase.functions.invoke('unified-chat', {
+      
+      const response1 = await supabase.functions.invoke('unified-chat', {
         body: {
           question: "tell me about my flight plan",
           aircraftModel: "Briefing"
         }
       });
-
-      const response1 = await Promise.race([fetchPromise1, timeoutPromise1]) as any;
 
       if (response1?.error) {
         throw new Error(response1.error.message || 'Failed to fetch flight plan briefing');
@@ -81,18 +76,13 @@ export const useBriefingCache = () => {
 
       // Second request: NOTAM analysis
       console.log('🚀 Making second request: NOTAM analysis');
-      const timeoutPromise2 = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Second request timeout after 45 seconds')), 45000);
-      });
-
-      const fetchPromise2 = supabase.functions.invoke('unified-chat', {
+      
+      const response2 = await supabase.functions.invoke('unified-chat', {
         body: {
           question: "Please provide full analysis of the notam, line by line please",
           aircraftModel: "Briefing"
         }
       });
-
-      const response2 = await Promise.race([fetchPromise2, timeoutPromise2]) as any;
 
       if (response2?.error) {
         throw new Error(response2.error.message || 'Failed to fetch NOTAM analysis');
@@ -115,20 +105,8 @@ export const useBriefingCache = () => {
 
     } catch (error) {
       console.error('❌ Error auto-fetching briefing:', error);
-      
-      // If it's a timeout or connectivity issue, store a placeholder 
-      // so the user sees the green checkmark but can still manually fetch
-      if (error.message?.includes('timeout') || error.message?.includes('Edge Function')) {
-        const placeholderCache: BriefingCache = {
-          flightPlan: 'Flight plan briefing data will be available when you send your first message.',
-          notamAnalysis: 'NOTAM analysis will be available when you send your first message.',
-          timestamp: Date.now(),
-          userId
-        };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(placeholderCache));
-        setIsCompleted(true);
-        console.log('📝 Stored placeholder cache due to timeout');
-      }
+      // Don't store placeholder data - let the user retry
+      setIsCompleted(false);
     } finally {
       setIsLoading(false);
     }
