@@ -248,9 +248,9 @@ const Index = () => {
               <TabsTrigger value="A350" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3">A350</TabsTrigger>
               <TabsTrigger value="Briefing" className="text-xs sm:text-sm min-w-0 px-2 sm:px-3 relative">
                 Briefing
-                {briefingCompleted && (
-                  <CheckCircle className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
-                )}
+                <CheckCircle className={`h-3 w-3 absolute -top-1 -right-1 ${
+                  briefingCompleted ? 'text-green-500' : 'text-gray-400'
+                }`} />
               </TabsTrigger>
             </TabsList>
             
