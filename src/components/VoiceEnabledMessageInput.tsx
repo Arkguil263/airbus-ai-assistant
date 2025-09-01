@@ -185,6 +185,27 @@ const VoiceEnabledMessageInput = ({
 
       setVoiceConnected(true);
       
+      // Send initial greeting trigger after connection is established
+      setTimeout(() => {
+        if (dcRef.current?.readyState === 'open') {
+          const greetingEvent = {
+            type: 'conversation.item.create',
+            item: {
+              type: 'message',
+              role: 'user',
+              content: [
+                {
+                  type: 'input_text',
+                  text: 'Hello'
+                }
+              ]
+            }
+          };
+          dcRef.current.send(JSON.stringify(greetingEvent));
+          dcRef.current.send(JSON.stringify({type: 'response.create'}));
+        }
+      }, 1000); // Wait 1 second to ensure connection is stable
+      
       toast({
         title: "Voice Connected",
         description: `Voice chat enabled for ${aircraftModel}. You can now speak your questions.`,
