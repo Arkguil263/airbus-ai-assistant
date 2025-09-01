@@ -18,14 +18,27 @@ export const useBriefingCache = () => {
   const checkCacheStatus = () => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
+      console.log('🔍 Checking cache status. Cached data exists:', !!cached);
+      
       if (cached) {
         const briefingCache: BriefingCache = JSON.parse(cached);
         const isValid = Date.now() - briefingCache.timestamp < CACHE_DURATION;
+        console.log('📊 Cache validation:', {
+          timestamp: briefingCache.timestamp,
+          age: Date.now() - briefingCache.timestamp,
+          maxAge: CACHE_DURATION,
+          isValid,
+          content: briefingCache.content?.substring(0, 50) + '...'
+        });
+        
         setIsCompleted(isValid);
         return isValid;
       }
+      console.log('❌ No cached data found');
+      setIsCompleted(false);
     } catch (error) {
       console.error('Error checking briefing cache:', error);
+      setIsCompleted(false);
     }
     return false;
   };
