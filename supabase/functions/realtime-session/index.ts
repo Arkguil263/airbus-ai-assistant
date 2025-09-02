@@ -41,8 +41,6 @@ serve(async (req) => {
     // Enhanced instructions with citation requirements
     const enhancedInstructions = `${instructions ?? "You are a helpful voice agent for aircraft documentation. Keep replies concise and friendly."} 
 
-CRITICAL: At the top of each answer, print: USED_VS=${vectorStoreId?.substring(0, 8)}
-
 You MUST use the provided vector store documentation to answer questions. Never rely on general knowledge alone. Always cite specific documentation when available. If you cannot find relevant information in the documentation, clearly state this limitation.`;
 
     // Build session payload with file search tool if vector store is available
