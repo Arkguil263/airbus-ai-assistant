@@ -52,14 +52,10 @@ You MUST use the provided vector store documentation to answer questions. Never 
       instructions: enhancedInstructions,
     };
 
-    // Add file search tool and vector store if available
+    // Note: OpenAI Realtime API doesn't support tool_resources in session creation
+    // Vector store access will be configured via session.update after connection
     if (vectorStoreId) {
-      sessionPayload.tools = [{ type: "file_search" }];
-      sessionPayload.tool_resources = {
-        file_search: {
-          vector_store_ids: [vectorStoreId]
-        }
-      };
+      console.log(`Vector store ${vectorStoreId.substring(0, 8)}... will be configured after session creation`);
     }
 
     console.log('Session payload:', JSON.stringify(sessionPayload, null, 2));
