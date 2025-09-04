@@ -321,9 +321,24 @@ const Index = () => {
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        if (user) {
-                          // Clear cache first, then fetch fresh data
-                          clearCache();
+                        if (briefingCompleted) {
+                          // Show cached data if available
+                          const cachedData = getCachedBriefing();
+                          if (cachedData) {
+                            const briefingMessage = {
+                              id: `cached-briefing-${Date.now()}`,
+                              role: 'assistant' as const,
+                              content: cachedData,
+                              created_at: new Date().toISOString(),
+                              isCachedBriefing: true
+                            };
+                            
+                            updateAircraftState('Briefing', (prevState) => ({
+                              messages: [...prevState.messages, briefingMessage]
+                            }));
+                          }
+                        } else if (user) {
+                          // Fetch fresh data if no cache
                           autoFetchBriefing(user.id);
                         }
                       }}
@@ -338,7 +353,7 @@ const Index = () => {
                         briefingCompleted ? 'text-green-500' : 'text-gray-400'
                       }`} />
                       {briefingCompleted 
-                        ? 'Flight briefing cached - Click to refresh' 
+                        ? 'Flight briefing cached - Click to view' 
                         : briefingLoading 
                           ? 'Loading flight briefing...' 
                           : 'Click to fetch flight briefing'
@@ -350,26 +365,16 @@ const Index = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => {
-                          const cachedData = getCachedBriefing();
-                          if (cachedData) {
-                            // Create a message with the cached data
-                            const briefingMessage = {
-                              id: `cached-briefing-${Date.now()}`,
-                              role: 'assistant' as const,
-                              content: cachedData,
-                              created_at: new Date().toISOString(),
-                              isCachedBriefing: true
-                            };
-                            
-                            // Add to briefing messages
-                            updateAircraftState('Briefing', (prevState) => ({
-                              messages: [...prevState.messages, briefingMessage]
-                            }));
+                          if (user) {
+                            // Clear cache and fetch fresh data
+                            clearCache();
+                            autoFetchBriefing(user.id);
                           }
                         }}
+                        disabled={briefingLoading}
                         className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
                       >
-                        Show Cached Briefing Data
+                        Refresh Briefing Data
                       </Button>
                     )}
                   </div>
