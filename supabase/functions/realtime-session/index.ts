@@ -79,7 +79,13 @@ You MUST use the provided vector store documentation to answer questions. Never 
     const json = await resp.json();
     console.log('Session created successfully');
     
-    return new Response(JSON.stringify(json), {
+    // Include vector store ID in response for frontend to use
+    const responseWithVectorStore = {
+      ...json,
+      vectorStoreId: vectorStoreId
+    };
+    
+    return new Response(JSON.stringify(responseWithVectorStore), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {

@@ -166,6 +166,7 @@ const VoiceEnabledMessageInput = ({
       }
 
       const clientSecret = data.client_secret.value;
+      const realVectorStoreId = data.vectorStoreId;
 
       // Set up WebRTC
       const pc = new RTCPeerConnection();
@@ -188,26 +189,21 @@ const VoiceEnabledMessageInput = ({
         console.log('Data channel opened, sending session update with vector store');
         
         // Send session update with file search tools after connection is established
-        const vectorStoreMapping = {
-          'A320': 'vs_A320',
-          'A330': 'vs_A330', 
-          'A350': 'vs_A350',
-          'Briefing': 'vs_Briefing'
-        };
-        
         const sessionUpdate = {
           type: 'session.update',
           session: {
-            tools: [{ type: "file_search" }],
-            tool_resources: {
-              file_search: {
-                vector_store_ids: [vectorStoreMapping[aircraftModel] || 'vs_default']
+            tools: realVectorStoreId ? [{ type: "file_search" }] : [],
+            ...(realVectorStoreId && {
+              tool_resources: {
+                file_search: {
+                  vector_store_ids: [realVectorStoreId]
+                }
               }
-            }
+            })
           }
         };
         
-        console.log(`Updating session with vector store for ${aircraftModel}:`, sessionUpdate);
+        console.log(`Updating session with real vector store ID for ${aircraftModel}:`, realVectorStoreId, sessionUpdate);
         dc.send(JSON.stringify(sessionUpdate));
       };
       
