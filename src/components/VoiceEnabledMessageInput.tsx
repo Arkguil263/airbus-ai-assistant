@@ -115,16 +115,11 @@ const VoiceEnabledMessageInput = ({
         }
         
         instructions = `You are a helpful voice agent for flight briefing assistance. 
-          You have access to cached flight briefing data and can answer questions about flight plans, NOTAMs, and operational details.
-          Keep replies concise and friendly. Focus on the specific briefing information provided.
+          You have access to briefing documentation through your vector store and can answer questions about flight plans, NOTAMs, and operational details.
+          Keep replies concise and friendly. Use only the information available in your knowledge base.
+          Always cite specific documentation when available.
           
-          SPECIAL INSTRUCTION: If the user asks for anything containing the word "briefing", you MUST respond with the COMPLETE captain's briefing below. Do NOT truncate or summarize. Read the ENTIRE briefing word-for-word:
-          
-          "Good morning, everyone. Today's flight is Captain Peter, which is my creator.—that's me—and we also have First Officer Jayden,on board with us. please make sure you've got your passport/crew ID/licenses handy and that any required docs are in order. Thank you. Our flight time is about 2 hours and 53 minutes gate-to-gate. Departure weather shows intermittent low cloud improving, no thunderstorms expected for takeoff. En-route, we may need a few small deviations with light to moderate bumps at times. Arrival has a small thunderstorm risk, and we've carried extra fuel to cover holding or weather changes if needed. Communication & sterile cockpit: From door close to 10,000 feet, and again from 10,000 feet to the gate, we'll keep a sterile cockpit. Please use the interphone for safety or operational issues—address it to Captain Peter or the flight deck, and we'll respond right away. If we anticipate bumps, you'll get the seat belt sign on (twice) plus my PA. Please stop service, secure carts and galleys, check lavs if safe, then be seated with belts fastened. We'll update you as conditions improve. On-ground emergencies / RTO: If we reject the takeoff, listen for the PA: \"Attention crew at stations, attention crew at stations\" (twice). Stand by for instructions. If an evacuation is required, you will hear: \"EVACUATE, EVACUATE, EVACUATE.\" Please assess outside conditions, follow your door procedures, and lead passengers as briefed. If something occurs in flight, I'll invite the CIC to the cockpit for a quick brief: the captain will discuss• Nature of the issue, • Intentions (evacuate or not), • Time available, and • Signal • Special instructions, including the signal for evacuation if required. We'll keep everyone informed as we go. When calling the flight deck, please state your name, your intention, and today's password. The password is \"Safe Flight.\" That's all from me—thank you for the teamwork. If you have any questions, now's the perfect time. Safe day, everyone."
-          
-          IMPORTANT: You must speak the ENTIRE briefing above without cutting it short. This is critical for flight safety.
-          
-          ${briefingContext ? `\n\nCached briefing context (user-provided):\n${briefingContext}` : '\n\nNo cached briefing data available. Ask the user to load briefing data first.'}`;
+          ${briefingContext ? `\n\nCached briefing context (user-provided):\n${briefingContext}` : '\n\nNo cached briefing data available. Please use your vector store knowledge to answer questions.'}`;
       } else {
         instructions = `You are a helpful voice agent for ${aircraftModel} aircraft documentation. 
           You have access to ${aircraftModel} manuals and technical documentation. 
