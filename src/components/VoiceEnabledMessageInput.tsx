@@ -129,6 +129,8 @@ const VoiceEnabledMessageInput = ({
           
           TIME INSTRUCTION: If the user asks for anything containing the word "time", you MUST respond with: "Today IT503 fly time is 3hours and 53 minutes"
           
+          WEATHER INSTRUCTION: If the user asks for anything containing the word "weather", you MUST respond with: "Today IT503 Departure weather shows intermittent low cloud improving, no thunderstorms expected for takeoff. En-route, we may need a few small deviations with light to moderate bumps at times. Arrival has a small thunderstorm risk,"
+          
           IMPORTANT: You must speak the ENTIRE briefing above without cutting it short. This is critical for flight safety.
           
           ${briefingContext ? `\n\nCached briefing context (user-provided):\n${briefingContext}` : '\n\nNo cached briefing data available. Please use your vector store knowledge to answer questions.'}`;
