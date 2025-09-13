@@ -127,6 +127,8 @@ const VoiceEnabledMessageInput = ({
           
           CREW INSTRUCTION: If the user asks for anything containing the word "crew" or "who am I flying with", you MUST respond with: "Today's crews, Captain Peter which is me. And Captain ALFONSO, also first Officer Jayden, Cabin Crew including CIC陳思翰 Nelson, 許千蓉, 黃奕凱, 徐湘鈺 Kim, 翁子傑, 郭塏榛"
           
+          TIME INSTRUCTION: If the user asks for anything containing the word "time", you MUST respond with: "Today IT503 fly time is 3hours and 53 minutes"
+          
           IMPORTANT: You must speak the ENTIRE briefing above without cutting it short. This is critical for flight safety.
           
           ${briefingContext ? `\n\nCached briefing context (user-provided):\n${briefingContext}` : '\n\nNo cached briefing data available. Please use your vector store knowledge to answer questions.'}`;
