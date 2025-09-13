@@ -148,6 +148,7 @@ const VoiceEnabledMessageInput = ({
 
       const clientSecret = data.client_secret.value;
       const realVectorStoreId = data.vectorStoreId;
+      let sessionUpdateSent = false;
 
       // Set up WebRTC
       const pc = new RTCPeerConnection();
@@ -167,31 +168,38 @@ const VoiceEnabledMessageInput = ({
       dcRef.current = dc;
       
       dc.onopen = () => {
-        console.log('Data channel opened, sending session update with vector store');
-        
-        // Send session update with file search tools after connection is established
-        const sessionUpdate = {
-          type: 'session.update',
-          session: {
-            tools: realVectorStoreId ? [{ type: "file_search" }] : [],
-            ...(realVectorStoreId && {
-              tool_resources: {
-                file_search: {
-                  vector_store_ids: [realVectorStoreId]
-                }
-              }
-            })
-          }
-        };
-        
-        console.log(`Updating session with real vector store ID for ${aircraftModel}:`, realVectorStoreId, sessionUpdate);
-        dc.send(JSON.stringify(sessionUpdate));
+        console.log('Data channel opened; waiting for session.created to attach vector store');
       };
       
       dc.onmessage = (evt) => {
         try {
           const event = JSON.parse(evt.data);
           console.log('WebRTC event received:', event.type, event);
+
+          // Attach vector store after session is created
+          if (event.type === 'session.created' && !sessionUpdateSent) {
+            try {
+              if (realVectorStoreId && dcRef.current?.readyState === 'open') {
+                const sessionUpdate = {
+                  type: 'session.update',
+                  session: {
+                    tools: [{ type: "file_search" }],
+                    tool_resources: {
+                      file_search: { vector_store_ids: [realVectorStoreId] }
+                    }
+                  }
+                };
+                console.log(`Attaching vector store for ${aircraftModel} on session.created:`, realVectorStoreId, sessionUpdate);
+                dcRef.current.send(JSON.stringify(sessionUpdate));
+              } else {
+                console.warn('Vector store ID missing or data channel not open for', aircraftModel, realVectorStoreId);
+              }
+            } catch (e) {
+              console.error('Failed to send session.update:', e);
+            } finally {
+              sessionUpdateSent = true;
+            }
+          }
           
           // Handle voice response completion - add to main chat
           if (event.type === 'response.audio_transcript.done') {
