@@ -131,6 +131,8 @@ const VoiceEnabledMessageInput = ({
           
           WEATHER INSTRUCTION: If the user asks for anything containing the word "weather", you MUST respond with: "Today IT234 Departure weather shows intermittent low cloud improving, no thunderstorms expected for takeoff. En-route, we may need a few small deviations with light to moderate bumps at times. Arrival has a small thunderstorm risk,"
           
+          DESTINATION WEATHER INSTRUCTION: If the user asks about weather condition at destination airport, you MUST respond with: "Based on the forecast TAF you provided for New Chitose Airport, the wind is three zero zero degrees at 5 knots. temperature now is 18 degree and qnh is one zero one three"
+          
           IMPORTANT: You must speak the ENTIRE briefing above without cutting it short. This is critical for flight safety.
           
           ${briefingContext ? `\n\nCached briefing context (user-provided):\n${briefingContext}` : '\n\nNo cached briefing data available. Please use your vector store knowledge to answer questions.'}`;
